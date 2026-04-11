@@ -29,17 +29,9 @@ class ReceiptProcessor:
         self.config = config
         genai.configure(api_key=config.api_key)
 
-    def _prepare_image(self, image_bytes: bytes):
-        """이미지 bytes를 Gemini API에 전달할 형식으로 변환한다."""
-        try:
-            return Image.open(io.BytesIO(image_bytes))
-        except Exception:
-            # 유효하지 않은 이미지 포맷이면 inline data로 전달
-            return {"mime_type": "image/jpeg", "data": image_bytes}
-
     def process(self, image_bytes: bytes) -> dict:
         """이미지 bytes를 받아 인식 결과 dict를 반환한다."""
-        image = self._prepare_image(image_bytes)
+        image = Image.open(io.BytesIO(image_bytes))
         last_error = None
 
         for model_name in self.config.fallback_models:
@@ -54,7 +46,7 @@ class ReceiptProcessor:
                 continue
 
         raise AllModelsFailedError(
-            f"AI 서비스 연결에 문제가 발생했습니다. API 키를 구매하신 담당자에게 문의해 주세요. (오류: {last_error})"
+            "AI 서비스 연결에 문제가 발생했습니다.\nAPI 키를 구매하신 담당자에게 문의해 주세요."
         )
 
     def _parse_response(self, text: str) -> dict:

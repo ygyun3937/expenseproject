@@ -24,7 +24,8 @@ def mock_config():
     return config
 
 def test_parses_valid_response(mock_config):
-    with patch("receipt_processor.genai") as mock_genai:
+    with patch("receipt_processor.genai") as mock_genai, \
+         patch("receipt_processor.Image.open") as mock_open:
         mock_model = MagicMock()
         mock_model.generate_content.return_value.text = SAMPLE_JSON_RESPONSE
         mock_genai.GenerativeModel.return_value = mock_model
@@ -37,7 +38,8 @@ def test_parses_valid_response(mock_config):
         assert len(result["items"]) == 2
 
 def test_falls_back_to_next_model_on_failure(mock_config):
-    with patch("receipt_processor.genai") as mock_genai:
+    with patch("receipt_processor.genai") as mock_genai, \
+         patch("receipt_processor.Image.open") as mock_open:
         first_model = MagicMock()
         first_model.generate_content.side_effect = Exception("Model deprecated")
         second_model = MagicMock()
@@ -51,7 +53,8 @@ def test_falls_back_to_next_model_on_failure(mock_config):
         assert mock_genai.GenerativeModel.call_count == 2
 
 def test_raises_when_all_models_fail(mock_config):
-    with patch("receipt_processor.genai") as mock_genai:
+    with patch("receipt_processor.genai") as mock_genai, \
+         patch("receipt_processor.Image.open") as mock_open:
         failing_model = MagicMock()
         failing_model.generate_content.side_effect = Exception("All failed")
         mock_genai.GenerativeModel.return_value = failing_model
@@ -62,7 +65,8 @@ def test_raises_when_all_models_fail(mock_config):
 
 def test_handles_json_wrapped_in_markdown(mock_config):
     wrapped = f"```json\n{SAMPLE_JSON_RESPONSE}\n```"
-    with patch("receipt_processor.genai") as mock_genai:
+    with patch("receipt_processor.genai") as mock_genai, \
+         patch("receipt_processor.Image.open") as mock_open:
         mock_model = MagicMock()
         mock_model.generate_content.return_value.text = wrapped
         mock_genai.GenerativeModel.return_value = mock_model

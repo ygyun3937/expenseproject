@@ -97,7 +97,7 @@ function addRow(storeName, date, itemName, amount) {
     <td><input type="text" value="${esc(storeName)}" placeholder="가게명"></td>
     <td><input type="text" value="${esc(date)}" placeholder="YYYY-MM-DD"></td>
     <td><input type="text" value="${esc(itemName)}" placeholder="항목"></td>
-    <td><input type="number" value="${amount}" placeholder="0" class="amount-input"></td>
+    <td><input type="number" value="${esc(amount)}" placeholder="0" class="amount-input"></td>
     <td class="no-print"><button class="delete-btn" onclick="deleteRow(this)">✕</button></td>
   `;
   tr.querySelectorAll('.amount-input').forEach(el => el.addEventListener('input', updateTotal));
@@ -133,5 +133,9 @@ function hideStatus() {
 }
 
 function esc(str) {
-  return String(str ?? '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
