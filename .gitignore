@@ -1,1 +1,4 @@
 .superpowers/
+dist/
+build/
+*.spec.bak
