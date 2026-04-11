@@ -1,0 +1,163 @@
+/* ===== 기본 ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  background: #f5f6fa;
+  color: #2d3436;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #2d3436;
+}
+
+/* ===== 업로드 ===== */
+.drop-zone {
+  border: 2px dashed #b2bec3;
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: #0984e3;
+  background: #f0f8ff;
+}
+
+.drop-zone-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.drop-zone p { color: #636e72; line-height: 1.6; }
+.drop-zone .hint { font-size: 0.85rem; margin-top: 8px; color: #b2bec3; }
+
+/* ===== 상태 메시지 ===== */
+.status {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.status.loading { background: #dfe6e9; color: #2d3436; }
+.status.error   { background: #ffeaa7; color: #d35400; border: 1px solid #fdcb6e; }
+.hidden { display: none !important; }
+
+/* ===== 테이블 ===== */
+#result-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  margin-top: 20px;
+}
+
+#result-table th {
+  background: #0984e3;
+  color: white;
+  padding: 12px 10px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+#result-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.9rem;
+}
+
+#result-table td input {
+  border: 1px solid transparent;
+  padding: 4px 6px;
+  width: 100%;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: transparent;
+}
+
+#result-table td input:focus {
+  border-color: #0984e3;
+  outline: none;
+  background: white;
+}
+
+.delete-btn {
+  background: #ff7675;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.total-label { text-align: right; font-weight: 600; padding-right: 16px; }
+.total-value { font-weight: 700; font-size: 1.05rem; color: #0984e3; }
+
+/* ===== 버튼 ===== */
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.btn-primary {
+  background: #0984e3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: #0773c5; }
+
+.btn-secondary {
+  background: white;
+  color: #2d3436;
+  border: 1px solid #dfe6e9;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.btn-secondary:hover { background: #f5f6fa; }
+
+/* ===== 인쇄 ===== */
+.print-only { display: none; }
+
+@media print {
+  body { background: white; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+
+  .print-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #2d3436;
+  }
+
+  .print-header h2 { font-size: 1.8rem; margin-bottom: 8px; }
+  .print-meta { font-size: 0.9rem; color: #636e72; }
+
+  #result-table {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  #result-table th { background: #2d3436!important; -webkit-print-color-adjust: exact; }
+}

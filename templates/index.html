@@ -1,1 +1,73 @@
-<!DOCTYPE html><html><body>placeholder</body></html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>경비정산서 자동화</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app" class="container">
+
+    <!-- 헤더 (화면용, 인쇄 시 숨김) -->
+    <header class="no-print">
+      <h1>경비정산서 자동화</h1>
+    </header>
+
+    <!-- 업로드 영역 (인쇄 시 숨김) -->
+    <section id="upload-section" class="no-print">
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-icon">📎</div>
+        <p>영수증 이미지를 여기에 드래그하거나<br><strong>클릭해서 선택</strong>하세요</p>
+        <p class="hint">JPG, PNG, PDF 지원 · 여러 파일 동시 업로드 가능</p>
+        <input type="file" id="file-input" accept="image/*,.pdf" multiple hidden>
+      </div>
+      <div id="status-message" class="status hidden"></div>
+    </section>
+
+    <!-- 결과 영역 -->
+    <section id="result-section" class="hidden">
+
+      <!-- 인쇄 헤더 (인쇄 시에만 표시) -->
+      <div class="print-header print-only">
+        <h2>경비정산서</h2>
+        <div class="print-meta">
+          <span>작성일: <span id="print-date"></span></span>
+        </div>
+      </div>
+
+      <!-- 결과 테이블 -->
+      <table id="result-table">
+        <thead>
+          <tr>
+            <th>가게명</th>
+            <th>날짜</th>
+            <th>항목</th>
+            <th>금액 (원)</th>
+            <th class="no-print">삭제</th>
+          </tr>
+        </thead>
+        <tbody id="result-body">
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="total-label">합계</td>
+            <td id="total-amount" class="total-value">0</td>
+            <td class="no-print"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- 행 추가 / 인쇄 버튼 (인쇄 시 숨김) -->
+      <div class="actions no-print">
+        <button id="add-row-btn" class="btn-secondary">+ 행 추가</button>
+        <button id="reset-btn" class="btn-secondary">초기화</button>
+        <button id="print-btn" class="btn-primary">🖨️ 정산서 인쇄</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
