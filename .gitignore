@@ -2,3 +2,8 @@
 dist/
 build/
 *.spec.bak
+.env
+__pycache__/
+*.pyc
+server.log
+nssm.exe

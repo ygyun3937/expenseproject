@@ -4,11 +4,44 @@ import google.generativeai as genai
 from PIL import Image
 import io
 
-PROMPT = """이것은 한국어 영수증 이미지입니다.
+OVERSEAS_PROMPT = """이것은 해외 경비 증빙 이미지입니다. 영수증/인보이스/카드결제내역 등 다양한 형식이 있을 수 있습니다.
 다음 항목을 반드시 JSON 형식으로만 반환해 주세요 (```json 마크다운 없이 순수 JSON만):
 {
-  "store_name": "가게명",
+  "store_name": "가게명/업체명 (영문 또는 현지어 그대로)",
   "date": "날짜 YYYY-MM-DD 형식",
+  "category": "카테고리 (아래 목록 중 하나)",
+  "currency": "통화 ISO 코드 (예: USD, EUR, JPY, CNY, VND)",
+  "items": [
+    {"name": "품목명", "quantity": 수량, "unit_price": 단가, "amount": 금액}
+  ],
+  "subtotal": 소계,
+  "tax": 세금(없으면 0),
+  "total": 합계
+}
+
+카테고리 분류 (반드시 이 중 하나):
+- 식비: Meal, Restaurant, Cafe, F&B
+- 교통비: Transport, Taxi, Uber, Metro, Train, Flight, Rental car
+- 숙박비: Hotel, Accommodation, Airbnb
+- 접대비: Entertainment (거래처 접대용)
+- 소모품: Supplies, Office supplies, Stationery
+- 운반비: Delivery, Shipping, Courier
+- 수수료: Fee, Bank charges, Service charge
+- 로밍: Roaming, Telecom
+- 기타: 위 분류에 해당되지 않는 모든 것
+
+규칙:
+- 모든 금액은 **양수**(절댓값). total/subtotal은 숫자만 반환 (통화 기호 없이).
+- currency는 화폐 기호(₩, $, €, ¥)로만 나와 있어도 ISO 코드로 변환 ($→USD, €→EUR, ¥→JPY, ₩→KRW).
+- 판단 애매하면 category="기타".
+- 반드시 JSON만 반환."""
+
+PROMPT = """이것은 한국어 경비 증빙 이미지입니다. 일반 영수증일 수도 있고, 카드 결제/계좌이체/송금 내역 스크린샷일 수도 있습니다.
+다음 항목을 반드시 JSON 형식으로만 반환해 주세요 (```json 마크다운 없이 순수 JSON만):
+{
+  "store_name": "가게명 또는 송금/이체 수취인명",
+  "date": "날짜 YYYY-MM-DD 형식",
+  "category": "카테고리 (아래 목록 중 하나)",
   "items": [
     {"name": "품목명", "quantity": 수량, "unit_price": 단가, "amount": 금액}
   ],
@@ -16,8 +49,24 @@ PROMPT = """이것은 한국어 영수증 이미지입니다.
   "tax": 부가세(없으면 0),
   "total": 합계
 }
-인식할 수 없는 항목은 null로 표시해 주세요.
-반드시 JSON만 반환하고 다른 설명은 포함하지 마세요."""
+
+카테고리 분류 (반드시 이 중 하나):
+- 식비: 식당, 카페, 편의점 식품, 음료 등
+- 유류비: 주유소 (자동차 주유)
+- 교통비: 택시, 버스, 지하철, KTX, 기차, 항공, 하이패스
+- 주차비: 주차장, 주차요금
+- 숙박비: 호텔, 모텔, 펜션, 에어비앤비
+- 접대비: 거래처 접대용 식사/선물 (명확히 표기된 경우만)
+- 소모품: 사무용품, 문구, 건전지, 프린터 토너 등
+- 운반비: 택배, 퀵서비스, 화물, 배송비
+- 기타: 위 분류에 명확히 들지 않는 모든 것 (송금/이체 포함)
+
+규칙:
+- 모든 금액은 **양의 정수**로 반환하세요. '-20,000원'처럼 음수/마이너스 기호가 있어도 절댓값(20000)으로 기록합니다.
+- 송금/이체 화면은 category="기타", items는 [{"name": "송금" 또는 "이체", "quantity": 1, "unit_price": 금액, "amount": 금액}] 한 줄로 채우세요.
+- 판단이 애매하면 category="기타"로 하세요.
+- 인식할 수 없는 항목은 null로 표시합니다.
+- 반드시 JSON만 반환하고 다른 설명은 포함하지 마세요."""
 
 
 class AllModelsFailedError(Exception):
@@ -29,19 +78,27 @@ class ReceiptProcessor:
         self.config = config
         genai.configure(api_key=config.api_key)
 
-    def process(self, image_bytes: bytes) -> dict:
+    def process(self, image_bytes: bytes, tab: str = "domestic") -> dict:
         """이미지 bytes를 받아 인식 결과 dict를 반환한다."""
         image = Image.open(io.BytesIO(image_bytes))
+        prompt = OVERSEAS_PROMPT if tab == "overseas" else PROMPT
         last_error = None
 
         for model_name in self.config.fallback_models:
             try:
                 model = genai.GenerativeModel(model_name)
-                response = model.generate_content([PROMPT, image])
+                gen_config = {"temperature": 0, "response_mime_type": "application/json"}
+                if "2.5" in model_name:
+                    gen_config["thinking_config"] = {"thinking_budget": 0}
+                response = model.generate_content(
+                    [prompt, image],
+                    generation_config=gen_config,
+                )
                 return self._parse_response(response.text)
             except AllModelsFailedError:
                 raise
             except Exception as e:
+                print(f"[{model_name}] 실패: {type(e).__name__}: {e}")
                 last_error = e
                 continue
 
@@ -51,7 +108,6 @@ class ReceiptProcessor:
 
     def _parse_response(self, text: str) -> dict:
         """응답 텍스트에서 JSON을 추출해 파싱한다."""
-        # ```json ... ``` 마크다운 제거
         text = re.sub(r"```json\s*", "", text)
         text = re.sub(r"```\s*", "", text)
         text = text.strip()

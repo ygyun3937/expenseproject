@@ -1,73 +1,1360 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>경비정산서 자동화</title>
-  <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAK 개인경비 정산 시스템 v18.9 (11종 다중 모델 폴백 강화)</title>
+    <script src="/vendor/tailwind.js"></script>
+    <style>
+        :root {
+            --table-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        }
+
+        @media print {
+            @page { size: auto; margin: 4mm !important; } 
+            @page portrait-page { size: portrait; margin: 4mm; }
+            @page landscape-page { size: landscape; margin: 4mm; }
+
+            .print-portrait-section { page: portrait-page; }
+            .print-landscape-section { 
+                page: landscape-page; 
+                break-before: page;
+                margin-top: 0 !important;
+            }
+
+            .hide-on-print { display: none !important; }
+            .keep-together { page-break-inside: auto; }
+            table { page-break-inside: auto; table-layout: auto !important; width: 100% !important; max-width: 100% !important; }
+            tr { page-break-inside: avoid; page-break-after: auto; } 
+            thead { display: table-header-group; } 
+            tfoot { display: table-row-group !important; } 
+            .is-collapsed.print-portrait-section { display: none !important; }
+            .no-print { display: none !important; }
+            
+            html, body { 
+                background-color: white !important; 
+                background: white !important;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+            
+            .print-container { 
+                width: 100%; border: none; box-shadow: none; margin: 0; padding: 0; background-color: white !important;
+            }
+
+            .print-grid-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .landscape-header { display: grid !important; margin-bottom: 8px !important; }
+            .print-portrait-grid { display: block !important; }
+            .print-portrait-grid .grand-total-box { display: none !important; }
+            .page-break-before { page-break-before: always !important; break-before: page !important; }
+            #domesticView, #overseasView { display: block !important; }
+
+            table tbody input, table tbody .editable-cell, table tbody td, table tfoot *, table tbody select {
+                color: #111827 !important; -webkit-text-fill-color: #111827 !important;
+            }
+            .meal-limit-warning { background-color: transparent !important; }
+
+            th[class*="min-w-"], td[class*="min-w-"] { min-width: 0 !important; }
+            #overseasTable th, #overseasTable td { padding: 1px 2px !important; font-size: 8px !important; }
+            #overseasTripAllowanceTable th, #overseasTripAllowanceTable td { padding: 1px 2px !important; font-size: 8px !important; }
+            table td, .table-input, .editable-cell { 
+                padding: 1.5px 2px !important; font-size: 9px !important; line-height: 1.1 !important; min-height: auto !important; word-break: break-all !important; white-space: normal !important;
+            }
+            th { padding: 2px 1px !important; font-size: 9px !important; white-space: normal !important; }
+            
+            .header-info-box { padding: 6px !important; margin-bottom: 0px !important; border: 1px solid #cbd5e1 !important; background-color: white !important; border-radius: 8px !important; width: 100% !important; }
+            .text-xl { font-size: 14px !important; }
+            .text-2xl, .text-3xl { font-size: 16px !important; }
+            .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 4px !important; }
+
+            .is-collapsed .fuel-content { display: none !important; }
+            
+            .header-info-box { border: 1px solid #cbd5e1 !important; background-color: white !important; border-radius: 8px !important; width: 100% !important; }
+            #domesticView .header-info-box { border-top: 4px solid #1e3a8a !important; }
+            #overseasView .header-info-box { border-top: 4px solid #4f46e5 !important; }
+            th { background-color: #f8fafc !important; color: #475569 !important; border: 1px solid #cbd5e1 !important; }
+            td { border: 1px solid #cbd5e1 !important; }
+            
+            .fuel-footer, .expense-footer, .trip-footer { background-color: #f8fafc !important; }
+            #fuelSection { border-left: 3px solid #eab308 !important; border-top: 1px solid #e2e8f0 !important; border-bottom: 1px solid #e2e8f0 !important; border-right: 1px solid #e2e8f0 !important; } 
+            #expenseSection { border-left: 3px solid #1e3a8a !important; border-top: 1px solid #e2e8f0 !important; border-bottom: 1px solid #e2e8f0 !important; border-right: 1px solid #e2e8f0 !important; } 
+            #tripSection { border-left: 3px solid #19736E !important; border-top: 1px solid #e2e8f0 !important; border-bottom: 1px solid #e2e8f0 !important; border-right: 1px solid #e2e8f0 !important; } 
+            #overseasExpenseSection, #overseasTripSection { border-left: 3px solid #4f46e5 !important; border-top: 1px solid #e2e8f0 !important; border-bottom: 1px solid #e2e8f0 !important; border-right: 1px solid #e2e8f0 !important; }
+            input, select { border: none !important; background: transparent !important; appearance: none !important; }
+            .shadow-lg, .shadow-md, .shadow-sm { box-shadow: none !important; }
+        }
+        
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .table-input { width: 100%; border: none; background: transparent; padding: 4px; text-align: center; outline: none; font-size: 11.5px; font-family: var(--table-font); }
+        .table-input:focus { outline: 2px solid #3b82f6; background: #eff6ff; }
+        .editable-cell { width: 100%; border: none; background: transparent; padding: 4px 4px; outline: none; font-size: 11px; font-family: var(--table-font); min-height: 20px; word-break: break-word; white-space: pre-wrap; line-height: 1.3; }
+        .editable-cell:focus { outline: 2px solid #3b82f6; background: #eff6ff; }
+        .editable-cell:empty:before { content: attr(placeholder); color: #9ca3af; pointer-events: none; display: block; }
+        
+        table td { font-size: 11.5px; font-family: var(--table-font); word-break: keep-all; }
+        .cost-input, [id^="total-"], .ovs-cost-input { white-space: nowrap !important; word-break: normal !important; }
+
+        .bg-mak-blue { background-color: #1e3a8a; }
+        .text-mak-blue { color: #1e3a8a; }
+        th { font-size: 11px; background-color: #f8fafc; color: #475569; font-weight: 600; border-color: #e2e8f0; white-space: nowrap; }
+        
+        .hidden-el { display: none !important; }
+        
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; width: 40px; height: 40px; animation: spinner 1s linear infinite; }
+        .loader-blue { border-top: 4px solid #2563eb; }
+        .loader-small { border: 2px solid #e0e7ff; border-top: 2px solid #4f46e5; border-radius: 50%; width: 14px; height: 14px; animation: spinner 1s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .row-ai-pending { background-color: #f8fafc; border-left: 4px solid #f59e0b !important; }
+        .trip-table { border: 1px solid #b7e0dd; }
+        .trip-table td { border-color: #b7e0dd; }
+        .fuel-content { transition: all 0.2s ease-out; overflow: hidden; }
+        .is-collapsed .fuel-content { max-height: 0; padding: 0 !important; opacity: 0; pointer-events: none; }
+        .header-info-box { background-color: #fff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .standard-label { font-size: 12.3px; font-weight: 600; color: #64748b; }
+        .underlined-input { border-bottom: 1px solid #cbd5e1; outline: none; padding: 2px 4px; font-size: 0.875rem; background: transparent; transition: border-color 0.2s; text-align: center; }
+        .underlined-input:focus { border-bottom: 2px solid #1e3a8a; }
+        .meal-limit-warning { background-color: #fef2f2 !important; color: #dc2626 !important; font-weight: 700 !important; }
+        input:disabled + div { cursor: not-allowed; opacity: 0.7; }
+        
+        @media screen {
+            .landscape-header { display: none !important; }
+            .print-only-tab { display: none !important; }
+        }
+    </style>
 </head>
-<body>
-  <div id="app" class="container">
+<body class="bg-gray-100 min-h-screen p-2 md:p-6 font-sans text-gray-800 relative">
 
-    <!-- 헤더 (화면용, 인쇄 시 숨김) -->
-    <header class="no-print">
-      <h1>경비정산서 자동화</h1>
-    </header>
+    <!-- 지역/직급별 일비 기준액 설정 모달 -->
+    <div id="perDiemSettingsModal" class="hidden-el fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center no-print backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg mx-4 border-t-8 border-indigo-600 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-black text-indigo-900 mb-2 flex items-center"><span class="mr-2">⚙️</span> 지역/직급별 일비 기준 설정</h3>
+            <p class="text-xs text-gray-500 mb-4">해당되는 출장 지역을 선택한 뒤 기준액을 설정해주세요.</p>
+            
+            <div class="mb-4 bg-indigo-50 p-2 rounded-lg border border-indigo-100">
+                <select id="pd-region-select" onchange="loadPerDiemSettingsUI()" class="w-full border border-indigo-300 rounded p-2 text-sm font-bold bg-white text-indigo-900 outline-none cursor-pointer shadow-sm">
+                    <option value="A">가 지역 (북미, 유럽, 일본, 중동 등)</option>
+                    <option value="B">나 지역 (아시아, 오세아니아, 남미 등)</option>
+                    <option value="C">다 지역 (기타 지역)</option>
+                </select>
+            </div>
 
-    <!-- 업로드 영역 (인쇄 시 숨김) -->
-    <section id="upload-section" class="no-print">
-      <div id="drop-zone" class="drop-zone">
-        <div class="drop-zone-icon">📎</div>
-        <p>영수증 이미지를 여기에 드래그하거나<br><strong>클릭해서 선택</strong>하세요</p>
-        <p class="hint">JPG, PNG 등 이미지 파일 지원 · 여러 파일 동시 업로드 가능</p>
-        <input type="file" id="file-input" accept="image/*" multiple hidden>
-      </div>
-      <div id="status-message" class="status hidden"></div>
-    </section>
-
-    <!-- 결과 영역 -->
-    <section id="result-section" class="hidden">
-
-      <!-- 인쇄 헤더 (인쇄 시에만 표시) -->
-      <div class="print-header print-only">
-        <h2>경비정산서</h2>
-        <div class="print-meta">
-          <span>작성일: <span id="print-date"></span></span>
+            <div class="grid grid-cols-[70px_1fr_1fr] gap-2 mb-2 text-[11px] font-bold text-center text-indigo-800 bg-gray-100 p-2 rounded">
+                <div>직급 구분</div>
+                <div>외화(USD 등) 기준액</div>
+                <div>원화(KRW) 기준액</div>
+            </div>
+            
+            <div class="space-y-2 mb-6">
+                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
+                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">임원</label>
+                    <input type="number" id="pd-exec-fc" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-blue-600 outline-none focus:border-indigo-500" placeholder="외화">
+                    <input type="number" id="pd-exec-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                </div>
+                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
+                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">부장</label>
+                    <input type="number" id="pd-gm-fc" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-blue-600 outline-none focus:border-indigo-500" placeholder="외화">
+                    <input type="number" id="pd-gm-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                </div>
+                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
+                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">차장</label>
+                    <input type="number" id="pd-dgm-fc" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-blue-600 outline-none focus:border-indigo-500" placeholder="외화">
+                    <input type="number" id="pd-dgm-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                </div>
+                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
+                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">과장</label>
+                    <input type="number" id="pd-manager-fc" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-blue-600 outline-none focus:border-indigo-500" placeholder="외화">
+                    <input type="number" id="pd-manager-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                </div>
+                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
+                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">대리</label>
+                    <input type="number" id="pd-am-fc" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-blue-600 outline-none focus:border-indigo-500" placeholder="외화">
+                    <input type="number" id="pd-am-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                </div>
+                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
+                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">주임</label>
+                    <input type="number" id="pd-sv-fc" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-blue-600 outline-none focus:border-indigo-500" placeholder="외화">
+                    <input type="number" id="pd-sv-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                </div>
+                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
+                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">사원</label>
+                    <input type="number" id="pd-staff-fc" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-blue-600 outline-none focus:border-indigo-500" placeholder="외화">
+                    <input type="number" id="pd-staff-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="closePerDiemSettings()" class="flex-1 bg-gray-100 text-gray-600 px-4 py-2.5 rounded-lg hover:bg-gray-200 transition font-bold text-sm">취소</button>
+                <button onclick="savePerDiemSettings()" class="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition font-bold text-sm shadow-sm">저장하기</button>
+            </div>
         </div>
-      </div>
+    </div>
 
-      <!-- 결과 테이블 -->
-      <table id="result-table">
-        <thead>
-          <tr>
-            <th>가게명</th>
-            <th>날짜</th>
-            <th>항목</th>
-            <th>금액 (원)</th>
-            <th class="no-print">삭제</th>
-          </tr>
-        </thead>
-        <tbody id="result-body">
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3" class="total-label">합계</td>
-            <td id="total-amount" class="total-value">0</td>
-            <td class="no-print"></td>
-          </tr>
-        </tfoot>
-      </table>
+    <!-- AI 처리 오버레이 -->
+    <div id="processingOverlay" class="hidden-el fixed inset-0 bg-black bg-opacity-60 z-40 flex items-center justify-center no-print backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full mx-4 border-t-8 border-blue-600">
+            <div class="loader loader-blue mx-auto mb-6"></div>
+            <h3 class="text-2xl font-black text-blue-900 mb-2">AI 초고속 병렬 분석 중</h3>
+            <p class="text-lg text-gray-700 font-bold mb-3">
+                <span id="overlayCurrentCount" class="text-blue-600 text-3xl">0</span> / <span id="overlayTotalCount">0</span> 장 처리 완료
+            </p>
+            <p id="overlayStatusText" class="text-sm text-blue-600 font-medium mb-6 h-5 animate-pulse">유료 모델 다중 스위칭 활성화됨 🚀</p>
+            <button onclick="cancelProcessing()" class="w-full bg-red-100 text-red-600 px-4 py-3 rounded-lg hover:bg-red-200 transition font-bold shadow-sm">
+                분석 중지 (직접 수동 입력)
+            </button>
+        </div>
+    </div>
 
-      <!-- 행 추가 / 인쇄 버튼 (인쇄 시 숨김) -->
-      <div class="actions no-print">
-        <button id="add-row-btn" class="btn-secondary">+ 행 추가</button>
-        <button id="reset-btn" class="btn-secondary">초기화</button>
-        <button id="print-btn" class="btn-primary">🖨️ 정산서 인쇄</button>
-      </div>
-    </section>
+    <div class="max-w-[1200px] mx-auto space-y-4 print-container">
+        
+        <!-- Branding Header -->
+        <header class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-900 flex flex-col md:flex-row justify-between items-center no-print">
+            <div>
+                <h1 class="text-2xl font-bold text-mak-blue">MAK CO., LTD <span class="text-sm font-normal text-gray-400 ml-2">Expense Report v18.9</span></h1>
+                <p class="text-gray-600 text-sm mt-1 font-medium">개인경비 정산 시스템 (11종 고성능 모델 편대 및 100% 인식 튜닝)</p>
+            </div>
+            <div class="mt-4 md:mt-0 space-x-2 flex">
+                <button onclick="window.print()" class="bg-mak-blue text-white px-5 py-2 rounded-lg hover:bg-blue-800 transition shadow-sm flex items-center text-sm font-bold text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                    정산서 인쇄
+                </button>
+            </div>
+        </header>
 
-  </div>
+        <!-- AI Panel -->
+        <section class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500 no-print mb-2">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h3 class="font-bold text-gray-700 flex items-center text-lg"><span class="mr-2">⚡</span> AI 초고속 일괄 분석 (유료 플랜 최적화)</h3>
+            </div>
+            <div class="flex flex-col gap-4">
+                <div class="flex flex-col md:flex-row gap-6 items-center">
+                    <div class="flex-1 w-full relative flex flex-col items-center">
+                        <label id="uploadLabel" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-300 rounded-xl cursor-pointer bg-blue-50/30 hover:bg-blue-50 transition">
+                            <div class="flex flex-col items-center justify-center py-4">
+                                <svg class="w-10 h-10 mb-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                <p class="text-blue-800 text-sm font-bold mb-1">영수증/PDF 여러 장 한 번에 업로드(클릭) · 📋 Ctrl+V 붙여넣기 · 드래그&드롭</p>
+                                <p class="text-gray-500 text-xs font-medium" id="aiHintText">현재 [국내] 탭 선택됨 - <span class="text-red-500 font-bold">기존 데이터 초기화 후 적용됩니다.</span></p>
+                            </div>
+                            <input type="file" id="receiptUpload" class="hidden" accept="image/*,application/pdf" multiple onchange="handleBatchReceiptAnalysis(this)" />
+                        </label>
+                        <!-- 에러 로그 박스 -->
+                        <div id="aiErrorLog" class="hidden-el w-full mt-4 bg-red-50 p-3 rounded-lg border border-red-200 text-[11px] text-red-600 max-h-32 overflow-y-auto">
+                            <div class="font-bold mb-1">❌ 분석 실패 항목 (11개 모델 모두 실패 시 표시)</div>
+                            <ul id="aiErrorList" class="list-disc list-inside space-y-0.5"></ul>
+                        </div>
+                    </div>
+                    <div class="md:w-80 text-xs text-gray-600 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-200 h-full">
+                        <p class="font-bold mb-1.5 text-blue-700 text-sm">📌 v18.9 모델 그물망 대폭 확장</p>
+                        <ul class="list-disc list-inside space-y-2 text-[11px] font-medium">
+                            <li><b class="text-indigo-600">사용 가능 모델을 11종으로 늘려 404/403 에러 발생 시 즉각 우회합니다.</b></li>
+                            <li><b class="text-green-700">로컬 환경에서도 무결점으로 통신하도록 정식 명칭 기반 라우팅을 강화했습니다.</b></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-  <script src="/static/app.js"></script>
+        <!-- Tabs Navigation -->
+        <div class="flex space-x-1 border-b border-gray-300 mb-6 no-print justify-between items-end">
+            <div class="flex space-x-1">
+                <button id="tabDomesticBtn" onclick="switchTab('domestic')" class="px-8 py-3.5 font-bold text-sm bg-white border-t-4 border-l border-r border-blue-600 text-blue-800 rounded-t-lg shadow-sm z-10 -mb-[1px] flex items-center transition-all"><span class="text-lg mr-2">🇰🇷</span> 국내 개인경비</button>
+                <button id="tabOverseasBtn" onclick="switchTab('overseas')" class="px-8 py-3.5 font-bold text-sm bg-gray-100 border-t-4 border-transparent border-l border-r border-gray-200 text-gray-500 hover:bg-gray-50 rounded-t-lg transition-all flex items-center"><span class="text-lg mr-2">✈️</span> 해외 개인경비</button>
+            </div>
+            
+            <div class="flex space-x-2 pb-2">
+                <button onclick="saveTempData()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg> 임시저장
+                </button>
+                <button onclick="loadTempData()" class="bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> 불러오기
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== DOMESTIC VIEW ==================== -->
+        <div id="domesticView">
+            <div id="portraitWrapper" class="print-portrait-section space-y-4 is-collapsed">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-stretch print-portrait-grid">
+                    <div class="header-info-box shadow-sm border-t-4 border-t-mak-blue !m-0 flex flex-col justify-center">
+                        <div class="flex-1 space-y-3 w-full">
+                            <div class="border-b-2 border-mak-blue pb-1 inline-block mb-1"><h2 class="text-xl font-black text-mak-blue tracking-tight">[국내 개인경비] Expense Management Report</h2></div>
+                            <table class="w-full text-sm header-table border-collapse">
+                                <tr>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">성명</th>
+                                    <td class="border border-slate-200 px-3 py-1.5"><input type="text" id="userName" oninput="syncHeaderData(this, 'userName')" class="w-full outline-none font-bold text-gray-700 bg-transparent"></td>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">소속 부서</th>
+                                    <td class="border border-slate-200 px-3 py-1.5"><input type="text" id="userDept" oninput="syncHeaderData(this, 'userDept')" class="w-full outline-none font-bold text-gray-700 bg-transparent"></td>
+                                </tr>
+                                <tr>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">정산 차수</th>
+                                    <td class="border border-slate-200 px-3 py-1.5">
+                                        <select id="settlementPeriod" onchange="syncHeaderData(this, 'settlementPeriod')" class="w-full outline-none font-bold text-gray-700 cursor-pointer bg-transparent">
+                                            <option value="1">1차 (1일 ~ 15일)</option><option value="2">2차 (16일 ~ 말일)</option>
+                                        </select>
+                                    </td>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">작성 일자</th>
+                                    <td class="border border-slate-200 px-3 py-1.5"><input type="text" id="writeDate" oninput="syncHeaderData(this, 'writeDate')" class="w-full outline-none text-gray-700 bg-transparent" placeholder="YYYY-MM-DD"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="grand-total-box bg-blue-900 rounded-xl py-4 px-6 text-white shadow-sm flex flex-col justify-center border-t-4 border-blue-900">
+                        <div class="flex justify-between items-center w-full">
+                            <div class="flex flex-col">
+                                <h4 class="text-blue-300 text-lg md:text-xl font-black uppercase tracking-tight leading-tight">국내 합계 금액 <span class="text-xs md:text-sm font-bold opacity-80">(TOTAL KRW)</span></h4>
+                                <p class="text-[10px] md:text-[11px] opacity-70 font-bold mt-0.5">(개인경비 합계 + 출장일비 합계)</p>
+                            </div>
+                            <div class="text-right whitespace-nowrap">
+                                <span class="text-2xl md:text-3xl font-black italic tracking-tighter">₩ <span id="grandTotal_P">0</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <section id="fuelSection" class="bg-white rounded-lg shadow-md border-l-4 border-yellow-500 fuel-log-section">
+                    <div class="p-4 cursor-pointer select-none flex justify-between items-center" onclick="toggleFuelSection()">
+                        <h3 class="font-bold text-gray-700 flex items-center text-lg"><span class="mr-2 text-xl">🚗</span> 차량 유류비 정산</h3>
+                        <div class="no-print">
+                            <button id="fuelToggleBtn" class="bg-yellow-50 text-white text-xs font-bold px-4 py-2 rounded shadow flex items-center">
+                                <span id="fuelToggleText">유류비 정산 펼치기</span>
+                                <svg id="fuelToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-2 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="fuel-content px-4 pb-4 pt-4 md:pt-0">
+                        <div class="flex flex-col md:flex-row justify-end items-center mb-3 border-t border-gray-100 pt-3 gap-4">
+                            <div class="flex flex-1 justify-end gap-4 items-center">
+                                <div class="flex items-center gap-2"><label class="standard-label">차종</label><input type="text" id="carModel" placeholder="예: 아이오닉6" class="underlined-input w-24"></div>
+                                <div class="flex items-center gap-2"><label class="standard-label">차량번호</label><input type="text" id="carNumber" placeholder="예: 12가 3456" class="underlined-input w-28"></div>
+                            </div>
+                            <button onclick="addFuelRow()" class="no-print text-sm bg-yellow-50 hover:bg-yellow-100 text-yellow-700 font-bold py-1.5 px-3 rounded border border-yellow-200 transition text-center">항목 추가</button>
+                        </div>
+                        <div class="overflow-x-auto mb-4">
+                            <table class="w-full border-collapse fuel-table" id="fuelLogTable">
+                                <thead><tr class="border-y bg-slate-50"><th class="p-2 border-r w-12 whitespace-nowrap">월</th><th class="p-2 border-r w-12 whitespace-nowrap">일</th><th class="p-2 border-r whitespace-nowrap">출발지</th><th class="p-2 border-r whitespace-nowrap">도착지</th><th class="p-2 border-r w-24 font-bold text-blue-800 whitespace-nowrap">거리(km)</th><th class="p-2 border-r w-24 font-bold text-green-700 whitespace-nowrap">통행료(원)</th><th class="p-2 border-r whitespace-nowrap">내용</th><th class="p-2 w-10 no-print whitespace-nowrap"></th></tr></thead>
+                                <tbody id="fuelLogBody"></tbody>
+                                <tfoot>
+                                    <tr class="bg-yellow-50 fuel-footer font-bold border-t border-yellow-200">
+                                        <td colspan="4" class="p-2 text-right text-gray-600 text-[12.3px] font-bold">합계 :</td>
+                                        <td class="p-2 text-right text-blue-700 bg-blue-50/50 border-r font-bold text-[14px] whitespace-nowrap"><span id="totalDistanceDisplay">0</span> km</td>
+                                        <td class="p-2 text-right text-green-700 bg-green-50/50 border-r font-bold text-[14px] whitespace-nowrap"><span id="totalTollDisplay">0</span> 원</td>
+                                        <td class="border-r bg-gray-50/10"></td>
+                                        <td class="no-print"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                                <div><label class="standard-label mb-0.5 block">유종 선택</label><select id="fuelType" class="w-full border border-slate-300 rounded text-sm p-1 bg-white" onchange="toggleFuelTypeInputs(); updateFuelCalc();"><option value="8">휘발유 (8km/ℓ)</option><option value="7">경유 (7km/ℓ)</option><option value="5">LPG (5km/ℓ)</option><option value="EV">전기 (EV 전용공식)</option></select></div>
+                                <div id="iceInputs"><label class="standard-label mb-0.5 block text-[12.3px]">유가 (고시 단가)</label><div class="flex items-center"><input type="text" id="fuelPrice" class="w-full border border-slate-300 rounded text-sm p-1 bg-white text-right" oninput="formatComma(this); updateFuelCalc();"><span class="ml-2 text-gray-400 text-xs font-bold">원</span></div></div>
+                                <div id="evInputs" class="hidden-el md:col-span-3 grid grid-cols-3 gap-3 text-left">
+                                    <div><label class="standard-label mb-0.5 block whitespace-nowrap">복합 전비(km/kWh)</label><input type="text" id="evEfficiency" class="w-full border border-slate-300 rounded text-sm p-1 text-right bg-white" oninput="formatComma(this, true); updateFuelCalc();"></div>
+                                    <div><label class="standard-label mb-0.5 block whitespace-nowrap">전력량(원/kWh)</label><input type="text" id="evRate" class="w-full border border-slate-300 rounded text-sm p-1 text-right bg-white" oninput="formatComma(this); updateFuelCalc();"></div>
+                                    <div><label class="standard-label mb-0.5 block whitespace-nowrap">기본료(원/kW)</label><input type="text" id="evBaseCharge" class="w-full border border-slate-300 rounded text-sm p-1 text-right bg-white" oninput="formatComma(this); updateFuelCalc();"></div>
+                                </div>
+                                <div class="no-print"><button onclick="syncFuelToMain()" class="w-full bg-yellow-500 text-white font-bold py-1.5 rounded hover:bg-yellow-600 transition text-sm">정산 반영</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="print-landscape-section">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-stretch landscape-header print-grid-2">
+                    <div class="header-info-box shadow-sm border-t-4 border-t-mak-blue !m-0 flex flex-col justify-center">
+                        <div class="flex-1 space-y-3 w-full">
+                            <div class="border-b-2 border-mak-blue pb-1 inline-block mb-1"><h2 class="text-xl font-black text-mak-blue tracking-tight">[국내 개인경비] Expense Management Report</h2></div>
+                            <table class="w-full text-sm header-table border-collapse">
+                                <tr>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">성명</th>
+                                    <td class="border border-slate-200 px-3 py-1.5"><input type="text" id="userName_L" oninput="syncHeaderData(this, 'userName')" class="w-full outline-none font-bold text-gray-700 bg-transparent"></td>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">소속 부서</th>
+                                    <td class="border border-slate-200 px-3 py-1.5"><input type="text" id="userDept_L" oninput="syncHeaderData(this, 'userDept')" class="w-full outline-none font-bold text-gray-700 bg-transparent"></td>
+                                </tr>
+                                <tr>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">정산 차수</th>
+                                    <td class="border border-slate-200 px-3 py-1.5">
+                                        <select id="settlementPeriod_L" onchange="syncHeaderData(this, 'settlementPeriod')" class="w-full outline-none font-bold text-gray-700 bg-transparent"><option value="1">1차 (1일 ~ 15일)</option><option value="2">2차 (16일 ~ 말일)</option></select>
+                                    </td>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">작성 일자</th>
+                                    <td class="border border-slate-200 px-3 py-1.5"><input type="text" id="writeDate_L" oninput="syncHeaderData(this, 'writeDate')" class="w-full outline-none text-gray-700 bg-transparent"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="grand-total-box bg-blue-900 rounded-xl py-4 px-6 text-white shadow-sm flex flex-col justify-center border-t-4 border-blue-900">
+                        <div class="flex justify-between items-center w-full">
+                            <div class="flex flex-col">
+                                <h4 class="text-blue-300 text-lg md:text-xl font-black uppercase tracking-tight leading-tight">국내 합계 금액 <span class="text-xs md:text-sm font-bold opacity-80">(TOTAL KRW)</span></h4>
+                                <p class="text-[10px] md:text-[11px] opacity-70 font-bold mt-0.5">(개인경비 합계 + 출장일비 합계)</p>
+                            </div>
+                            <div class="text-right whitespace-nowrap">
+                                <span class="text-2xl md:text-3xl font-black italic tracking-tighter">₩ <span id="grandTotal_L">0</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="keep-together space-y-4">
+                    <div id="expenseSection" class="bg-white overflow-hidden shadow-lg border border-blue-200 border-l-4 border-l-blue-900 rounded-lg expense-section">
+                        <div class="p-3 border-b border-blue-100 flex justify-between items-center bg-blue-50/50">
+                            <h2 class="font-bold text-lg text-mak-blue flex items-center"><span class="mr-2">💵</span> 개인경비 정산</h2>
+                            <button onclick="addRow()" class="no-print text-sm bg-white hover:bg-blue-100 text-blue-700 px-4 py-1.5 rounded border border-blue-200 font-bold shadow-sm transition">항목 추가</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse table-auto" id="settlementTable">
+                                <thead>
+                                    <tr class="border-b bg-gray-50">
+                                        <th class="p-1 border-r min-w-[30px] text-center whitespace-nowrap" rowspan="2">월</th>
+                                        <th class="p-1 border-r min-w-[30px] text-center whitespace-nowrap" rowspan="2">일</th>
+                                        <th class="p-1 border-b text-center tracking-wide whitespace-nowrap" colspan="9">지출 항목 (금액: 원)</th>
+                                        <th class="p-1 border-l border-b w-12 text-center whitespace-nowrap" rowspan="2">증빙</th>
+                                        <th class="p-1 border-l border-b text-center whitespace-nowrap" rowspan="2">비고 (상세내용)</th>
+                                        <th class="p-1 border-b w-8 no-print" rowspan="2"></th>
+                                    </tr>
+                                    <tr class="text-gray-500 border-b bg-gray-50">
+                                        <th class="p-1 border-r min-w-[55px] text-red-700 whitespace-nowrap text-center">식비</th>
+                                        <th class="p-1 border-r min-w-[55px] text-blue-800 font-bold whitespace-nowrap text-center">유류비</th>
+                                        <th class="p-1 border-r min-w-[55px] text-emerald-700 font-bold whitespace-nowrap text-center">교통비</th>
+                                        <th class="p-1 border-r min-w-[55px] whitespace-nowrap text-center">주차비</th>
+                                        <th class="p-1 border-r min-w-[55px] whitespace-nowrap text-center">숙박비</th>
+                                        <th class="p-1 border-r min-w-[55px] whitespace-nowrap text-center">접대비</th>
+                                        <th class="p-1 border-r min-w-[55px] whitespace-nowrap text-center">소모품</th>
+                                        <th class="p-1 border-r min-w-[55px] whitespace-nowrap text-center">운반비</th>
+                                        <th class="p-1 min-w-[55px] whitespace-nowrap text-center">기타</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody"></tbody>
+                                <tfoot>
+                                    <tr class="bg-blue-50 expense-footer font-bold border-t-2 border-blue-200">
+                                        <td colspan="2" class="p-2 text-center border-r text-blue-900 text-[12px] whitespace-nowrap">항목별 합계</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight" id="total-01">0</td>
+                                        <td class="p-1 px-2 border-r text-right text-blue-800 whitespace-nowrap tracking-tight" id="total-02">0</td>
+                                        <td class="p-1 px-2 border-r text-right text-emerald-700 whitespace-nowrap tracking-tight" id="total-03">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight" id="total-04">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight" id="total-05">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight" id="total-06">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight" id="total-07">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight" id="total-08">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight" id="total-09">0</td>
+                                        <td class="border-r border-l"></td>
+                                        <td class="py-2 px-4 text-right align-middle whitespace-nowrap"><span class="standard-label mr-2 font-bold text-[13px]">개인경비 합계 :</span><span class="text-xl text-blue-800 font-black italic">₩ <span id="expenseSubTotal">0</span></span></td>
+                                        <td class="no-print"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Domestic Trip Allowance -->
+                    <div id="tripSection" class="bg-white overflow-hidden shadow-lg border border-teal-200 border-l-4 border-l-[#19736E] rounded-lg trip-allowance-section">
+                        <div class="p-3 border-b border-teal-100 flex justify-between items-center bg-teal-50/50"><h2 class="font-bold text-lg text-[#19736E] flex items-center"><span class="mr-2">📅</span> 출장일비 정산</h2><button onclick="addTripRow()" class="no-print text-sm bg-white hover:bg-teal-50 text-[#19736E] px-4 py-1 rounded border border-[#19736E] font-bold shadow-sm transition">항목 추가</button></div>
+                        <div class="overflow-x-auto"><table class="w-full border-collapse table-auto" id="tripAllowanceTable"><tbody id="tripBody"><tr><td id="tripLabel" class="bg-slate-50 text-[#19736E] font-bold text-center w-12 border-r border-b text-[12.3px] whitespace-nowrap">출장<br>일비</td></tr></tbody><tfoot><tr class="bg-teal-50 trip-footer font-bold border-t border-teal-100"><td colspan="2" class="p-2 border-r text-center text-[#19736E] text-[12.3px] whitespace-nowrap">합계</td><td class="p-2 border-r text-right text-[#19736E] min-w-[80px] pr-2 font-bold text-[14px] whitespace-nowrap" id="totalTripAllowance">0</td><td colspan="5" class="p-2 text-left text-red-600 text-[12.3px] font-normal pl-4 leading-relaxed bg-white">※ 증빙: 출장신청서 또는 출장보고서</td></tr></tfoot></table></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== OVERSEAS VIEW ==================== -->
+        <div id="overseasView" class="hidden">
+            <div class="print-landscape-section">
+                <!-- Header Info & Grand Total for Overseas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-stretch landscape-header print-grid-2">
+                    <div class="header-info-box shadow-sm border-t-4 border-t-indigo-600 !m-0 flex flex-col justify-center">
+                        <div class="flex-1 space-y-3 w-full">
+                            <div class="border-b-2 border-indigo-600 pb-1 inline-block mb-1"><h2 class="text-xl font-black text-indigo-700 tracking-tight">[해외 개인경비] Overseas Expense Report</h2></div>
+                            <table class="w-full text-sm header-table border-collapse">
+                                <tr>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">성명</th>
+                                    <td class="border border-slate-200 px-3 py-1.5"><input type="text" id="userName_O" oninput="syncHeaderData(this, 'userName')" class="w-full outline-none font-bold text-gray-700 bg-transparent"></td>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">소속 부서</th>
+                                    <td class="border border-slate-200 px-3 py-1.5"><input type="text" id="userDept_O" oninput="syncHeaderData(this, 'userDept')" class="w-full outline-none font-bold text-gray-700 bg-transparent"></td>
+                                </tr>
+                                <tr>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">정산 차수</th>
+                                    <td class="border border-slate-200 px-3 py-1.5">
+                                        <select id="settlementPeriod_O" onchange="syncHeaderData(this, 'settlementPeriod')" class="w-full outline-none font-bold text-gray-700 bg-transparent"><option value="1">1차 (1일 ~ 15일)</option><option value="2">2차 (16일 ~ 말일)</option></select>
+                                    </td>
+                                    <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">작성 일자</th>
+                                    <td class="border border-slate-200 px-3 py-1.5"><input type="text" id="writeDate_O" oninput="syncHeaderData(this, 'writeDate')" class="w-full outline-none text-gray-700 bg-transparent"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-900 rounded-xl py-4 px-6 text-white shadow-sm flex flex-col justify-center border-t-4 border-indigo-900">
+                        <div class="flex justify-between items-center w-full">
+                            <div class="flex flex-col">
+                                <h4 class="text-indigo-200 text-lg md:text-xl font-black uppercase tracking-tight leading-tight">해외경비 원화 환산 총계 <span class="text-xs md:text-sm font-bold opacity-80">(TOTAL KRW)</span></h4>
+                                <p class="text-[10px] md:text-[11px] opacity-70 font-bold mt-0.5">(적용 환율에 따른 원화 청구 금액)</p>
+                            </div>
+                            <div class="text-right whitespace-nowrap">
+                                <span class="text-2xl md:text-3xl font-black italic tracking-tighter">₩ <span id="overseasGrandTotal">0</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg mb-4 flex flex-col md:flex-row items-center justify-between gap-4 no-print shadow-sm">
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <span class="font-bold text-indigo-800 whitespace-nowrap">📅 출장 기간</span>
+                        <input type="date" id="tripStartDate" class="border border-indigo-300 rounded p-1.5 text-sm w-full md:w-36 outline-none focus:border-indigo-500 bg-white"> 
+                        <span class="text-indigo-400 font-bold">~</span> 
+                        <input type="date" id="tripEndDate" class="border border-indigo-300 rounded p-1.5 text-sm w-full md:w-36 outline-none focus:border-indigo-500 bg-white">
+                    </div>
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <button id="avgCalcBtn" onclick="fetchAverageRate()" class="bg-indigo-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-indigo-700 transition shadow-sm flex items-center whitespace-nowrap">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            평균 환율 일괄 연동
+                        </button>
+                    </div>
+                </div>
+
+                <div class="keep-together space-y-4">
+                    <div id="overseasExpenseSection" class="bg-white overflow-hidden shadow-lg border border-indigo-200 border-l-4 border-l-indigo-800 rounded-lg expense-section">
+                        <div class="p-3 border-b border-indigo-100 flex justify-between items-center bg-indigo-50/50">
+                            <div class="flex items-center">
+                                <h2 class="font-bold text-lg text-indigo-800 flex items-center"><span class="mr-2">✈️</span> 해외 개인경비 정산</h2>
+                            </div>
+                            <button onclick="addOverseasRow()" class="no-print text-sm bg-white hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded border border-indigo-200 font-bold shadow-sm transition">항목 추가</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse table-auto" id="overseasTable">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b">
+                                        <th class="p-1 border-r w-7 text-center whitespace-nowrap" rowspan="2">월</th>
+                                        <th class="p-1 border-r w-7 text-center whitespace-nowrap" rowspan="2">일</th>
+                                        <th class="p-1 border-b border-r text-center tracking-wide whitespace-nowrap" colspan="9">지출 항목 (외화 입력)</th>
+                                        <th class="p-1 border-r border-b w-12 text-center whitespace-nowrap" rowspan="2">통화</th>
+                                        <th class="p-1 border-r border-b w-14 text-center whitespace-nowrap text-blue-600" rowspan="2">환율(₩)</th>
+                                        <th class="p-1 border-r border-b w-20 text-center whitespace-nowrap text-indigo-900 font-bold" rowspan="2">원화환산액</th>
+                                        <th class="p-1 border-r border-b w-10 text-center whitespace-nowrap" rowspan="2">증빙</th>
+                                        <th class="p-1 border-b text-center whitespace-nowrap" rowspan="2">비고 (상세내용)</th>
+                                        <th class="p-1 border-b w-6 no-print" rowspan="2"></th>
+                                    </tr>
+                                    <tr class="text-gray-500 border-b bg-gray-50">
+                                        <th class="p-1 border-r min-w-[55px] text-center">식비</th>
+                                        <th class="p-1 border-r min-w-[55px] text-center">교통비</th>
+                                        <th class="p-1 border-r min-w-[55px] text-center">숙박비</th>
+                                        <th class="p-1 border-r min-w-[55px] text-center">접대비</th>
+                                        <th class="p-1 border-r min-w-[55px] text-center">소모품</th>
+                                        <th class="p-1 border-r min-w-[55px] text-center">운반비</th>
+                                        <th class="p-1 border-r min-w-[55px] text-center">수수료</th>
+                                        <th class="p-1 border-r min-w-[55px] text-center">기타</th>
+                                        <th class="p-1 border-r min-w-[55px] text-center">로밍비</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overseasTableBody"></tbody>
+                                <tfoot>
+                                    <tr class="bg-indigo-50 font-bold border-t-2 border-indigo-200">
+                                        <td colspan="2" class="p-1 text-center border-r text-indigo-900 text-[11px] whitespace-nowrap">외화 합계</td>
+                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-01">0</td>
+                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-02">0</td>
+                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-03">0</td>
+                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-04">0</td>
+                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-05">0</td>
+                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-06">0</td>
+                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-07">0</td>
+                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-08">0</td>
+                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-09">0</td>
+                                        <td colspan="2" class="p-1 px-2 text-right text-indigo-900 text-[12px] whitespace-nowrap border-r">원화 환산 합계 :</td>
+                                        <td colspan="4" class="p-1 px-3 text-left text-indigo-900 font-black italic text-[14px] whitespace-nowrap">₩ <span id="overseasFooterTotal">0</span></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Overseas Trip Allowance -->
+                    <div id="overseasTripSection" class="bg-white overflow-hidden shadow-lg border border-indigo-200 border-l-4 border-l-indigo-800 rounded-lg trip-allowance-section">
+                        <div class="p-3 border-b border-indigo-100 flex justify-between items-center bg-indigo-50/50">
+                            <div class="flex items-center">
+                                <h2 class="font-bold text-lg text-indigo-800 flex items-center"><span class="mr-2">📅</span> 해외 출장일비 정산</h2>
+                                <button onclick="openPerDiemSettings()" class="ml-3 text-[11px] bg-white border border-indigo-200 text-indigo-600 px-2 py-1 rounded shadow-sm hover:bg-indigo-50 font-bold flex items-center no-print">⚙️ 일비 기준 설정</button>
+                            </div>
+                            <button onclick="addOverseasTripRow()" class="no-print text-sm bg-white hover:bg-indigo-100 text-indigo-700 px-4 py-1 rounded border border-indigo-200 font-bold shadow-sm transition">항목 추가</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse table-auto text-[11.5px]" id="overseasTripAllowanceTable">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b">
+                                        <th class="p-1 border-r text-center w-24">출장 기간</th>
+                                        <th class="p-1 border-r text-center">국가/도시</th>
+                                        <th class="p-1 border-r text-center w-16">지역</th>
+                                        <th class="p-1 border-r text-center w-20">직급</th>
+                                        <th class="p-1 border-r text-center w-16">지급 기준</th>
+                                        <th class="p-1 border-r text-center w-12">일수</th>
+                                        <th class="p-1 border-r text-center w-24">일비 단가</th>
+                                        <th class="p-1 border-r text-center w-16">통화</th>
+                                        <th class="p-1 border-r text-center w-20 text-blue-600">환율(₩)</th>
+                                        <th class="p-1 border-r text-center w-24 text-indigo-900">원화(₩)</th>
+                                        <th class="p-1 text-center w-16">비고</th>
+                                        <th class="p-1 w-6 no-print"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overseasTripBody"></tbody>
+                                <tfoot>
+                                    <tr class="bg-indigo-50 font-bold border-t border-indigo-200">
+                                        <td colspan="9" class="p-2 border-r text-right text-indigo-900 text-[12px] whitespace-nowrap">해외 출장일비 총계 :</td>
+                                        <td class="p-2 border-r text-right text-indigo-900 min-w-[80px] pr-2 font-bold text-[14px] whitespace-nowrap">₩ <span id="overseasTripFooterTotal">0</span></td>
+                                        <td colspan="2" class="p-2 text-left text-red-600 text-[11px] font-normal pl-2 bg-white">※ 출장 품의서 증빙</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // API 키는 서버(.env)에서 관리됩니다. 클라이언트는 /process 엔드포인트를 호출합니다.
+        const apiKey = "server-managed";
+
+        let existingReceipts = new Set(); 
+        let tripRowCount = 0;
+        let isProcessingCanceled = false; 
+        let activeTab = 'domestic'; 
+
+        // 캐시 환경 초기화 로직 (Canvas <-> 로컬 전환 시 충돌 방지)
+        let cachedModel = localStorage.getItem('MAK_activeGeminiModel');
+        const envSafeModels = apiKey.trim() === "" 
+            ? ['gemini-2.5-flash-preview-09-2025'] 
+            : ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-pro-exp-02-05', 'gemini-1.5-pro-002', 'gemini-1.5-flash-002'];
+            
+        if (cachedModel && !envSafeModels.includes(cachedModel)) {
+            cachedModel = null;
+            localStorage.removeItem('MAK_activeGeminiModel');
+        }
+        window.activeGeminiModel = cachedModel;
+
+        // 일비 설정 로드
+        let perDiemRates = { 
+            'A': { exec: { fc: 150, krw: 200000 }, gm: { fc: 130, krw: 170000 }, dgm: { fc: 110, krw: 150000 }, manager: { fc: 90, krw: 120000 }, am: { fc: 80, krw: 100000 }, sv: { fc: 70, krw: 90000 }, staff: { fc: 60, krw: 80000 } },
+            'B': { exec: { fc: 130, krw: 170000 }, gm: { fc: 110, krw: 150000 }, dgm: { fc: 90, krw: 120000 }, manager: { fc: 80, krw: 100000 }, am: { fc: 70, krw: 90000 }, sv: { fc: 60, krw: 80000 }, staff: { fc: 50, krw: 70000 } },
+            'C': { exec: { fc: 110, krw: 150000 }, gm: { fc: 90, krw: 120000 }, dgm: { fc: 80, krw: 100000 }, manager: { fc: 70, krw: 90000 }, am: { fc: 60, krw: 80000 }, sv: { fc: 50, krw: 70000 }, staff: { fc: 40, krw: 60000 } }
+        };
+        try {
+            const saved = localStorage.getItem('MAK_PerDiemRates_v3');
+            if(saved) perDiemRates = JSON.parse(saved);
+        } catch(e){}
+
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        function getStorageKey() {
+            return `MAK_Expense_Temp_${activeTab}`;
+        }
+
+        function saveTempData() {
+            const currentKey = getStorageKey();
+            let data = {};
+            if(activeTab === 'domestic') {
+                const tbody = document.getElementById('tableBody');
+                data.rows = [];
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    const rowData = {
+                        month: tr.querySelector('.val-month').value,
+                        day: tr.querySelector('.val-day').value,
+                        costs: Array.from(tr.querySelectorAll('.cost-input')).map(inp => inp.value),
+                        seq: tr.querySelector('.val-seq').value,
+                        memo: tr.querySelector('.memo-input').innerText
+                    };
+                    data.rows.push(rowData);
+                });
+            } else {
+                const tbody = document.getElementById('overseasTableBody');
+                data.rows = [];
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    const rowData = {
+                        month: tr.querySelector('.val-month').value,
+                        day: tr.querySelector('.val-day').value,
+                        costs: Array.from(tr.querySelectorAll('.ovs-cost-input')).map(inp => inp.value),
+                        curr: tr.querySelector('.ovs-curr').value,
+                        rate: tr.querySelector('.ovs-rate').value,
+                        seq: tr.querySelector('.ovs-seq').value,
+                        memo: tr.querySelector('.ovs-memo-input').innerText
+                    };
+                    data.rows.push(rowData);
+                });
+            }
+            localStorage.setItem(currentKey, JSON.stringify(data));
+            alert(`현재 탭(${activeTab === 'domestic' ? '국내' : '해외'})의 내역이 임시저장 되었습니다.`);
+        }
+
+        function loadTempData() {
+            const currentKey = getStorageKey();
+            const savedData = localStorage.getItem(currentKey);
+            if(!savedData) {
+                alert("저장된 임시 데이터가 없습니다.");
+                return;
+            }
+            const data = JSON.parse(savedData);
+            if(activeTab === 'domestic') {
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+                existingReceipts.clear();
+                if(data.rows && data.rows.length > 0) {
+                    data.rows.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b hover:bg-gray-50 transition";
+                        tr.setAttribute('data-month', row.month || 99); 
+                        tr.setAttribute('data-day', row.day || 99);
+                        tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${row.month}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${row.day}" onchange="updateSortAttributes(this)"></td>${row.costs.map((v, idx) => {
+                            const i = idx + 1;
+                            const cls = (i === 1 && unformatComma(v) > 12000) ? 'meal-limit-warning' : (i === 2 ? 'font-bold text-blue-800' : (i === 3 ? 'font-bold text-emerald-700' : ''));
+                            return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();" class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
+                        }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" value="${row.seq || ''}" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${row.memo}</div></td><td class="no-print text-center"><button onclick="deleteRow(this)" class="text-red-300 hover:text-red-500">×</button></td>`;
+                        tbody.appendChild(tr); 
+                    });
+                } else {
+                    for(let i=0; i<8; i++) addRow();
+                }
+                updateTotals();
+            } else {
+                const tbody = document.getElementById('overseasTableBody');
+                tbody.innerHTML = '';
+                existingReceipts.clear();
+                if(data.rows && data.rows.length > 0) {
+                    data.rows.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b hover:bg-gray-50 transition";
+                        tr.setAttribute('data-month', row.month || 99);
+                        tr.setAttribute('data-day', row.day || 99);
+                        let catInputs = '';
+                        row.costs.forEach((val, idx) => {
+                            const i = idx + 1;
+                            catInputs += `<td class="border-r"><input type="text" class="table-input ovs-cat-${i} ovs-cost-input text-right text-gray-700" value="${val}" oninput="formatComma(this, true); calcOvsRow(this);" placeholder="0"></td>`;
+                        });
+                        tr.innerHTML = `
+                            <td class="border-r"><input type="number" class="table-input val-month" value="${row.month}" onchange="updateOvsSortAttributes(this)"></td>
+                            <td class="border-r"><input type="number" class="table-input val-day" value="${row.day}" onchange="updateOvsSortAttributes(this)"></td>
+                            ${catInputs}
+                            <td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${row.curr}" placeholder="USD" onchange="autoFetchRate(this.nextElementSibling.querySelector('button'))"></td>
+                            <td class="border-r bg-indigo-50/30 relative">
+                                <input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" value="${row.rate}" oninput="formatComma(this, true); calcOvsRow(this);" placeholder="0.00">
+                                <button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                </button>
+                            </td>
+                            <td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder="0"></td>
+                            <td class="border-r"><input type="text" class="table-input ovs-seq" value="${row.seq || ''}" placeholder="번호"></td>
+                            <td class="relative"><div contenteditable="true" class="editable-cell ovs-memo-input pr-10" placeholder="적요">${row.memo}</div></td>
+                            <td class="no-print text-center"><button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-300 hover:text-red-500">×</button></td>
+                        `;
+                        tbody.appendChild(tr);
+                        calcOvsRow(tr.querySelector('.ovs-rate'));
+                    });
+                } else {
+                    for(let i=0; i<2; i++) addOverseasRow();
+                }
+                updateOverseasTotals();
+            }
+        }
+
+        window.onload = function() {
+            const today = new Date().toISOString().split('T')[0];
+            const writeDateInp = document.getElementById('writeDate');
+            if(writeDateInp) { 
+                writeDateInp.value = today; 
+                document.getElementById('writeDate_L').value = today; 
+                document.getElementById('writeDate_O').value = today; 
+            }
+            for(let i=0; i<3; i++) { addFuelRow(); addRow(); }
+            addTripRow(); addTripRow();
+            for(let i=0; i<2; i++) { addOverseasRow(); addOverseasTripRow(); }
+            toggleFuelTypeInputs();
+        }
+
+        function loadPerDiemSettingsUI() {
+            saveCurrentTabToMemory();
+            currentEditingRegion = document.getElementById('pd-region-select').value;
+            const ranks = ['exec', 'gm', 'dgm', 'manager', 'am', 'sv', 'staff'];
+            ranks.forEach(r => {
+                document.getElementById(`pd-${r}-fc`).value = perDiemRates[currentEditingRegion][r].fc;
+                document.getElementById(`pd-${r}-krw`).value = perDiemRates[currentEditingRegion][r].krw;
+            });
+        }
+
+        function openPerDiemSettings() {
+            document.getElementById('pd-region-select').value = 'A';
+            currentEditingRegion = 'A';
+            const ranks = ['exec', 'gm', 'dgm', 'manager', 'am', 'sv', 'staff'];
+            ranks.forEach(r => {
+                document.getElementById(`pd-${r}-fc`).value = perDiemRates['A'][r].fc;
+                document.getElementById(`pd-${r}-krw`).value = perDiemRates['A'][r].krw;
+            });
+            document.getElementById('perDiemSettingsModal').classList.remove('hidden-el');
+        }
+        
+        function closePerDiemSettings() { document.getElementById('perDiemSettingsModal').classList.add('hidden-el'); }
+        
+        function savePerDiemSettings() {
+            saveCurrentTabToMemory();
+            localStorage.setItem('MAK_PerDiemRates_v3', JSON.stringify(perDiemRates));
+            closePerDiemSettings();
+            alert("일비 기준액이 저장되었습니다.");
+        }
+
+        function autoSetPerDiem(el) {
+            const tr = el.closest('tr');
+            if(!tr) return;
+            const baseSelect = tr.querySelector('.ovs-trip-base');
+            if(!baseSelect) { autoFetchRate(el, false); return; }
+            const regionSelect = tr.querySelector('.ovs-trip-region');
+            const rankSelect = tr.querySelector('.ovs-trip-rank');
+            const currInput = tr.querySelector('.ovs-trip-curr');
+            const priceInput = tr.querySelector('.ovs-trip-price');
+            const rateInput = tr.querySelector('.ovs-trip-rate');
+            const fetchBtn = tr.querySelector('button');
+            const region = regionSelect.value;
+            const rank = rankSelect.value;
+            const base = baseSelect.value;
+            if (base === 'krw') {
+                currInput.value = 'KRW'; currInput.readOnly = true; currInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                rateInput.value = "1"; rateInput.readOnly = true; rateInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+                if(fetchBtn) fetchBtn.style.display = 'none';
+                if (region && rank && perDiemRates[region] && perDiemRates[region][rank]) { priceInput.value = perDiemRates[region][rank].krw; formatComma(priceInput, true); }
+                calcOvsTripRow(priceInput);
+            } else {
+                currInput.readOnly = false; currInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                if(currInput.value === 'KRW' || currInput.value === '원' || currInput.value === '원화') currInput.value = 'USD';
+                rateInput.readOnly = false; rateInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                if(fetchBtn) fetchBtn.style.display = 'block';
+                if (region && rank && perDiemRates[region] && perDiemRates[region][rank]) { priceInput.value = perDiemRates[region][rank].fc; formatComma(priceInput, true); }
+                calcOvsTripRow(priceInput);
+                if (currInput.value && currInput.value !== 'KRW' && (el === currInput || el === rankSelect || el === baseSelect || el === regionSelect)) { autoFetchRate(currInput, true, true); }
+            }
+        }
+
+        async function handleBatchReceiptAnalysis(input) {
+            if (!input.files || input.files.length === 0) return;
+            const files = Array.from(input.files); 
+            const uploadLabel = document.getElementById('uploadLabel');
+            const processingOverlay = document.getElementById('processingOverlay');
+            const overlayCurrentCount = document.getElementById('overlayCurrentCount');
+            const overlayTotalCount = document.getElementById('overlayTotalCount');
+            const overlayStatusText = document.getElementById('overlayStatusText');
+            const errorLog = document.getElementById('aiErrorLog');
+            const errorList = document.getElementById('aiErrorList');
+            if(activeTab === 'domestic') { document.getElementById('tableBody').innerHTML = ''; } else { document.getElementById('overseasTableBody').innerHTML = ''; }
+            existingReceipts.clear(); 
+            isProcessingCanceled = false; 
+            input.disabled = true;
+            uploadLabel.classList.add('opacity-50', 'cursor-not-allowed');
+            errorLog.classList.add('hidden-el');
+            errorList.innerHTML = '';
+            processingOverlay.classList.remove('hidden-el');
+            overlayTotalCount.innerText = files.length;
+            overlayCurrentCount.innerText = '0';
+            const promises = files.map(async (file) => {
+                if (isProcessingCanceled) return;
+                try {
+                    const match = file.name.match(/(\d+)\s*(명|인)/);
+                    const peopleCount = match ? parseInt(match[1]) : 1;
+                    const results = await analyzeReceiptBatch(file, overlayStatusText);
+                    if (results && Array.isArray(results)) {
+                        for (const res of results) {
+                            const key = `${res.month}-${res.day}-${res.amount}-${res.merchant}`;
+                            if (activeTab === 'domestic') {
+                                if (existingReceipts.has(key)) { updateExistingRow(res, peopleCount, key); } 
+                                else { existingReceipts.add(key); addAIResultRow(res, peopleCount, key); }
+                            } else {
+                                addOverseasRow({ month: res.month, day: res.day, categoryIndex: res.categoryIndex, currency: res.currency, amount: res.amount, memo: `[AI] ${res.merchant || ''}` });
+                            }
+                        }
+                    }
+                } catch (e) { 
+                    console.error("Error processing file:", file.name, e); 
+                    errorLog.classList.remove('hidden-el');
+                    errorList.innerHTML += `<li>${file.name} - ${e.message}</li>`;
+                } finally {
+                    processedCount++; 
+                    overlayCurrentCount.innerText = processedCount;
+                }
+            });
+            let processedCount = 0;
+            await Promise.all(promises);
+            if (activeTab === 'domestic') { sortAndReindex(); updateTotals(); }
+            else { sortAndReindexOverseas(); updateOverseasTotals(); }
+            if (!isProcessingCanceled) {
+                input.disabled = false;
+                uploadLabel.classList.remove('opacity-50', 'cursor-not-allowed');
+                processingOverlay.classList.add('hidden-el');
+                input.value = ""; 
+            }
+        }
+
+        // ===== 클립보드 붙여넣기 / 드래그&드롭 =====
+        function triggerAnalysisWithFiles(fileList) {
+            const input = document.getElementById('receiptUpload');
+            const dt = new DataTransfer();
+            for (const f of fileList) dt.items.add(f);
+            input.files = dt.files;
+            handleBatchReceiptAnalysis(input);
+        }
+
+        // Ctrl+V 붙여넣기
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            const files = [];
+            for (const it of items) {
+                if (it.kind === 'file' && (it.type.startsWith('image/') || it.type === 'application/pdf')) {
+                    const f = it.getAsFile();
+                    if (f) {
+                        // 붙여넣은 이미지는 보통 이름이 'image.png' 등 → 타임스탬프로 구분
+                        const ext = (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+                        const named = new File([f], f.name || `pasted_${Date.now()}.${ext}`, { type: f.type });
+                        files.push(named);
+                    }
+                }
+            }
+            if (files.length > 0) {
+                e.preventDefault();
+                triggerAnalysisWithFiles(files);
+            }
+        });
+
+        // 업로드 영역 드래그&드롭
+        (function() {
+            const label = document.getElementById('uploadLabel');
+            if (!label) return;
+            ['dragover', 'dragenter'].forEach(ev => label.addEventListener(ev, (e) => {
+                e.preventDefault();
+                label.classList.add('bg-blue-100');
+            }));
+            ['dragleave', 'drop'].forEach(ev => label.addEventListener(ev, (e) => {
+                e.preventDefault();
+                label.classList.remove('bg-blue-100');
+            }));
+            label.addEventListener('drop', (e) => {
+                const files = Array.from(e.dataTransfer?.files || []);
+                if (files.length > 0) triggerAnalysisWithFiles(files);
+            });
+        })();
+
+        // 백엔드(한국어 카테고리) → v18.9 프론트 포맷 매핑
+        const DOMESTIC_CATEGORY_TO_INDEX = {
+            '식비': 1, '유류비': 2, '주차비': 3, '교통비': 4,
+            '숙박비': 5, '접대비': 6, '소모품': 7, '운반비': 8, '기타': 9
+        };
+        const OVERSEAS_CATEGORY_TO_INDEX = {
+            '식비': 1, '교통비': 2, '숙박비': 3, '접대비': 4,
+            '소모품': 5, '운반비': 6, '수수료': 7, '기타': 8, '로밍': 9
+        };
+
+        function parseServerDate(dateStr) {
+            if (!dateStr) return { month: 0, day: 0 };
+            const m = String(dateStr).match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (!m) return { month: 0, day: 0 };
+            return { month: parseInt(m[2]), day: parseInt(m[3]) };
+        }
+
+        function convertServerReceipt(r) {
+            if (r.error) return null;
+            const { month, day } = parseServerDate(r.date);
+            const amount = Math.abs(parseInt(r.total) || 0);
+            const merchant = r.store_name || 'Unknown';
+            const map = activeTab === 'overseas' ? OVERSEAS_CATEGORY_TO_INDEX : DOMESTIC_CATEGORY_TO_INDEX;
+            const categoryIndex = map[r.category] || (activeTab === 'overseas' ? 8 : 9);
+            const out = { month, day, amount, merchant, categoryIndex };
+            if (activeTab === 'overseas') out.currency = (r.currency || 'USD').toUpperCase();
+            return out;
+        }
+
+        async function analyzeReceiptBatch(file, statusTextEl) {
+            statusTextEl.innerText = `${file.name} 분석 중...`;
+            const formData = new FormData();
+            formData.append('files', file);
+            formData.append('tab', activeTab);
+            const res = await fetch('/process', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || `서버 오류 (${res.status})`);
+            }
+            // 백엔드는 배열(각 원소 = 영수증 dict 또는 {error})을 반환
+            const arr = Array.isArray(data) ? data : [];
+            const errs = arr.filter(r => r && r.error).map(r => `${r.filename}: ${r.error}`);
+            if (errs.length > 0) {
+                const errorLog = document.getElementById('aiErrorLog');
+                const errorList = document.getElementById('aiErrorList');
+                errorLog.classList.remove('hidden-el');
+                errs.forEach(e => errorList.innerHTML += `<li>${e}</li>`);
+            }
+            return arr.map(convertServerReceipt).filter(Boolean);
+        }
+
+        async function _legacyAnalyzeReceiptBatch_unused(base64, mimeType, statusTextEl) {
+            let prompt = `Analyze the receipt/invoice image or document carefully. Extract ALL receipts/invoices found. You MUST fill in all properties (month, day, amount, merchant, categoryIndex). If a field is illegible or missing, guess reasonably or use 0 for numbers and 'Unknown' for strings. DO NOT omit the receipt.
+            Map category to Index: 1:Meal, 2:Fuel, 3:Parking, 4:Transport, 5:Hotel, 6:Entertainment, 7:Supplies, 8:Delivery, 9:Other. Gas/Fuel is 2. Delivery/Shipping (택배/배송) is 8.
+            Return ONLY a valid JSON object with a "receipts" array containing the objects. Example: {"receipts": [{"month":3, "day":15, "amount":15000, "merchant":"Starbucks", "categoryIndex":1}]}`;
+            if (activeTab === 'overseas') {
+                prompt = `Analyze the overseas receipt/invoice. Extract ALL receipts. You MUST fill in all properties including currency. If missing, use 0 for numbers and 'Unknown' for strings. DO NOT omit.
+                Map category to Index: 1:Meal, 2:Transport, 3:Hotel, 4:Entertainment, 5:Supplies, 6:Delivery, 7:Fee, 8:Other, 9:Roaming.
+                Return ONLY a valid JSON object with a "receipts" array containing the objects. Example: {"receipts": [{"month":3, "day":15, "amount":25.5, "currency":"USD", "merchant":"Uber", "categoryIndex":2}]}`;
+            }
+
+            // v18.9: 11개 모델로 그물망 확장 (정식 명칭 기반)
+            let fallbackModels = [];
+            if (!apiKey || apiKey.trim() === "") {
+                fallbackModels = ['gemini-2.5-flash-preview-09-2025'];
+            } else {
+                fallbackModels = [
+                    'gemini-2.0-flash',
+                    'gemini-1.5-flash',
+                    'gemini-1.5-pro',
+                    'gemini-2.0-pro-exp-02-05',
+                    'gemini-1.5-pro-002',
+                    'gemini-1.5-flash-002',
+                    'gemini-1.5-pro-001',
+                    'gemini-1.5-flash-001',
+                    'gemini-1.5-flash-8b',
+                    'gemini-1.5-flash-8b-latest',
+                    'gemini-2.0-flash-lite-preview-02-05'
+                ];
+            }
+            
+            let modelsToTry = [...fallbackModels];
+            if (window.activeGeminiModel && modelsToTry.includes(window.activeGeminiModel)) {
+                modelsToTry = modelsToTry.filter(m => m !== window.activeGeminiModel);
+                modelsToTry.unshift(window.activeGeminiModel);
+            }
+
+            let lastErrorMsg = "인식 실패";
+
+            for (let m = 0; m < modelsToTry.length; m++) {
+                const currentModel = modelsToTry[m];
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
+                const finalMimeType = (mimeType.startsWith('image/')) ? 'image/jpeg' : mimeType;
+                const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: finalMimeType, data: base64 } }] }], generationConfig: { responseMimeType: "application/json" } };
+
+                for (let i = 0; i < 3; i++) { 
+                    if (isProcessingCanceled) throw new Error("STOP_PROCESSING");
+                    statusTextEl.innerText = `${currentModel} 스캔 중... (${m+1}/${modelsToTry.length})`;
+
+                    try {
+                        const res = await fetch(url, { method: 'POST', body: JSON.stringify(payload) }); 
+                        const data = await res.json();
+                        if (!res.ok) {
+                            lastErrorMsg = data.error?.message || `HTTP ${res.status}`;
+                            if (res.status === 400 && lastErrorMsg.toLowerCase().includes('payload size')) { throw new Error("파일 용량 초과."); }
+                            if (res.status === 429) { throw new Error("429_LIMIT"); }
+                            throw new Error(`MODEL_FALLBACK`);
+                        }
+                        
+                        let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if(!text) throw new Error("AI 대답 없음");
+                        
+                        let parsedData;
+                        try {
+                            text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+                            parsedData = JSON.parse(text);
+                        } catch(e) {
+                            const startIdx = text.indexOf('{');
+                            const endIdx = text.lastIndexOf('}');
+                            if (startIdx !== -1 && endIdx !== -1) { parsedData = JSON.parse(text.substring(startIdx, endIdx + 1)); }
+                            else { const arrStartIdx = text.indexOf('['); const arrEndIdx = text.lastIndexOf(']'); if (arrStartIdx !== -1 && arrEndIdx !== -1) { parsedData = JSON.parse(text.substring(arrStartIdx, arrEndIdx + 1)); } else { throw new Error("JSON 파싱 불가"); } }
+                        }
+                        
+                        let finalArray = [];
+                        if (parsedData && Array.isArray(parsedData.receipts)) { finalArray = parsedData.receipts; }
+                        else if (parsedData && Array.isArray(parsedData.items)) { finalArray = parsedData.items; }
+                        else if (Array.isArray(parsedData)) { finalArray = parsedData; }
+                        else if (parsedData && typeof parsedData === 'object' && (parsedData.merchant || parsedData.amount)) { finalArray = [parsedData]; }
+                        else { throw new Error("형식 불일치"); }
+
+                        window.activeGeminiModel = currentModel;
+                        localStorage.setItem('MAK_activeGeminiModel', currentModel);
+                        return finalArray;
+                    } catch (e) { 
+                        lastErrorMsg = e.message;
+                        if(e.message === "STOP_PROCESSING") throw e;
+                        if(e.message.includes('MODEL_FALLBACK') || e.message.includes('429_LIMIT') || i === 2) {
+                            console.warn(`[Auto-Switch] ${currentModel} 실패. 다음 모델 전환.`);
+                            break; 
+                        }
+                        await sleep(1000);
+                    }
+                }
+            }
+            throw new Error(`11개 모델 모두 분석 실패. (마지막 에러: ${lastErrorMsg})`);
+        }
+
+        function convertFileToBase64(file) { 
+            return new Promise((resolve, reject) => { 
+                if (!file.type.startsWith('image/')) {
+                    const reader = new FileReader(); reader.readAsDataURL(file); 
+                    reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); return;
+                }
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image(); img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                        const MAX_WIDTH = 800; const MAX_HEIGHT = 800;
+                        let width = img.width; let height = img.height;
+                        if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                        else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                        canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        ctx.clearRect(0, 0, width, height); img.src = ''; resolve(dataUrl.split(',')[1]);
+                    };
+                    img.onerror = error => reject(error);
+                };
+                reader.onerror = error => reject(error);
+            }); 
+        }
+
+        // --- 기타 공통 UI 함수 ---
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('domesticView').classList.toggle('hidden', tab !== 'domestic');
+            document.getElementById('overseasView').classList.toggle('hidden', tab !== 'overseas');
+            const domBtn = document.getElementById('tabDomesticBtn');
+            const ovsBtn = document.getElementById('tabOverseasBtn');
+            if(tab === 'domestic') {
+                domBtn.className = "px-8 py-3.5 font-bold text-sm bg-white border-t-4 border-l border-r border-blue-600 text-blue-800 rounded-t-lg shadow-sm z-10 -mb-[1px] flex items-center transition-all";
+                ovsBtn.className = "px-8 py-3.5 font-bold text-sm bg-gray-100 border-t-4 border-transparent border-l border-r border-gray-200 text-gray-500 hover:bg-gray-50 rounded-t-lg transition-all flex items-center";
+                document.getElementById('aiHintText').innerHTML = "현재 [국내] 탭 선택됨 - <span class='text-red-500 font-bold'>기존 데이터 초기화 후 적용됩니다.</span>";
+            } else {
+                ovsBtn.className = "px-8 py-3.5 font-bold text-sm bg-white border-t-4 border-l border-r border-indigo-600 text-indigo-800 rounded-t-lg shadow-sm z-10 -mb-[1px] flex items-center transition-all";
+                domBtn.className = "px-8 py-3.5 font-bold text-sm bg-gray-100 border-t-4 border-transparent border-l border-r border-gray-200 text-gray-500 hover:bg-gray-50 rounded-t-lg transition-all flex items-center";
+                document.getElementById('aiHintText').innerHTML = "현재 [해외] 탭 선택됨 - <span class='text-red-500 font-bold'>기존 데이터 초기화 후 적용됩니다.</span>";
+            }
+        }
+
+        function formatComma(input, isFloat = false) {
+            let value = input.value.replace(/,/g, ''); if (value === "") return;
+            if (isFloat) {
+                let parts = value.split('.'); parts[0] = parts[0].replace(/[^0-9]/g, '');
+                if (parts[0] !== "") parts[0] = Number(parts[0]).toLocaleString();
+                if (parts.length > 1) input.value = parts[0] + '.' + parts[1].replace(/[^0-9]/g, ''); else input.value = parts[0];
+            } else { value = value.replace(/[^0-9]/g, ''); if (value !== "") input.value = Number(value).toLocaleString(); else input.value = ""; }
+        }
+
+        function unformatComma(val) { if (!val) return 0; let cleaned = String(val).replace(/[^0-9.-]/g, ''); return parseFloat(cleaned) || 0; }
+
+        function syncHeaderData(input, field) {
+            const val = input.value;
+            const ids = { 'userName': ['userName', 'userName_L', 'userName_O'], 'userDept': ['userDept', 'userDept_L', 'userDept_O'], 'settlementPeriod': ['settlementPeriod', 'settlementPeriod_L', 'settlementPeriod_O'], 'writeDate': ['writeDate', 'writeDate_L', 'writeDate_O'] };
+            ids[field].forEach(id => { const el = document.getElementById(id); if (el && el !== input) el.value = val; });
+        }
+
+        function toggleFuelSection() {
+            const wrapper = document.getElementById('portraitWrapper');
+            const btnText = document.getElementById('fuelToggleText');
+            const icon = document.getElementById('fuelToggleIcon');
+            if (wrapper.classList.contains('is-collapsed')) { wrapper.classList.remove('is-collapsed'); btnText.innerText = "유류비 정산 접기"; icon.style.transform = "rotate(180deg)"; } 
+            else { wrapper.classList.add('is-collapsed'); btnText.innerText = "유류비 정산 펼치기"; icon.style.transform = "rotate(0deg)"; }
+        }
+
+        function addFuelRow() {
+            const tbody = document.getElementById('fuelLogBody'); const tr = document.createElement('tr');
+            tr.className = "border-b hover:bg-gray-50 transition";
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input fuel-month" placeholder="월"></td><td class="border-r"><input type="number" class="table-input fuel-day" placeholder="일"></td><td class="border-r"><div contenteditable="true" class="editable-cell text-center" placeholder="출발지"></div></td><td class="border-r"><div contenteditable="true" class="editable-cell text-center" placeholder="도착지"></div></td><td class="border-r bg-blue-50/20"><input type="text" oninput="formatComma(this, true); updateFuelCalc()" class="table-input fuel-dist-input text-blue-600 font-bold text-right whitespace-nowrap" placeholder="0"></td><td class="border-r bg-green-50/20"><input type="text" oninput="formatComma(this, true); updateFuelCalc()" class="table-input fuel-toll-input text-green-700 font-bold text-right whitespace-nowrap" placeholder="0"></td><td class="border-r"><div contenteditable="true" class="editable-cell text-center" placeholder="내용"></div></td><td class="no-print text-center"><button onclick="this.parentElement.parentElement.remove(); updateFuelCalc();" class="text-red-300 hover:text-red-500">×</button></td>`;
+            tbody.appendChild(tr);
+        }
+
+        function updateFuelCalc() {
+            let d = 0, t = 0; document.querySelectorAll('.fuel-dist-input').forEach(i => d += unformatComma(i.value)); document.querySelectorAll('.fuel-toll-input').forEach(i => t += unformatComma(i.value));
+            document.getElementById('totalDistanceDisplay').innerText = d.toLocaleString(); document.getElementById('totalTollDisplay').innerText = t.toLocaleString();
+            const type = document.getElementById('fuelType').value; let cost = 0;
+            if (type === 'EV') { const eff = unformatComma(document.getElementById('evEfficiency').value) || 1; const rate = unformatComma(document.getElementById('evRate').value) || 0; const base = unformatComma(document.getElementById('evBaseCharge').value) || 0; cost = Math.floor(base + (d * rate / eff)); } 
+            else { const eff = parseFloat(type); const p = unformatComma(document.getElementById('fuelPrice').value); cost = Math.floor((d / eff) * p); }
+            return { d, cost, t };
+        }
+
+        function syncFuelToMain() {
+            const data = updateFuelCalc(); if(data.d <= 0 && data.t <= 0) return alert("데이터가 없습니다.");
+            const fuelLabel = document.getElementById('fuelType').value === 'EV' ? "충전비" : "유류비";
+            addRow({ amount: data.cost, col: 2, memo: `${fuelLabel} - ${data.d.toLocaleString()}km` });
+            addRow({ amount: data.t, col: 3, memo: `주행 통행료 합계` }); updateTotals();
+        }
+
+        function addRow(pre = null) {
+            const tbody = document.getElementById('tableBody'); const tr = document.createElement('tr');
+            tr.className = "border-b hover:bg-gray-50 transition";
+            const m = pre?.month || "", d = pre?.day || "", memo = pre?.memo || "", formattedAmt = pre?.amount ? pre.amount.toLocaleString() : "";
+            tr.setAttribute('data-month', m || 99); tr.setAttribute('data-day', d || 99);
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateSortAttributes(this)"></td>${[1,2,3,4,5,6,7,8,9].map(i => {
+                const v = (pre && pre.col === i) ? formattedAmt : ""; const cls = (i === 1 && unformatComma(v) > 12000) ? 'meal-limit-warning' : (i === 2 ? 'font-bold text-blue-800' : (i === 3 ? 'font-bold text-emerald-700' : ''));
+                return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();" class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
+            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print text-center"><button onclick="deleteRow(this)" class="text-red-300 hover:text-red-500">×</button></td>`;
+            tbody.appendChild(tr); reIndexRows(); updateTotals();
+        }
+
+        function updateTotals() {
+            let subTotals = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+            document.querySelectorAll('#tableBody tr').forEach(row => { row.querySelectorAll('.cost-input').forEach((inp, idx) => { const v = unformatComma(inp.value); if(idx === 0 && v > 12000) inp.classList.add('meal-limit-warning'); else if(idx === 0) inp.classList.remove('meal-limit-warning'); subTotals[idx] += v; }); });
+            let grand = 0;
+            subTotals.forEach((s, idx) => { document.getElementById(`total-0${idx + 1}`).innerText = s.toLocaleString(); grand += s; });
+            document.getElementById('expenseSubTotal').innerText = grand.toLocaleString();
+            const tripTotal = unformatComma(document.getElementById('totalTripAllowance').innerText);
+            const finalTotalStr = (grand + tripTotal).toLocaleString();
+            const gtP = document.getElementById('grandTotal_P'); if (gtP) gtP.innerText = finalTotalStr;
+            const gtL = document.getElementById('grandTotal_L'); if (gtL) gtL.innerText = finalTotalStr;
+        }
+
+        function addTripRow() {
+            tripRowCount++; const tbody = document.getElementById('tripBody'); const tr = document.createElement('tr'); tr.id = `trip-row-${tripRowCount}`; const labelCell = document.getElementById('tripLabel'); labelCell.rowSpan = tripRowCount;
+            tr.innerHTML = `<td class="p-1 border-r border-b text-center w-12 text-slate-400 text-[13px] bg-white font-bold">${tripRowCount}</td><td class="p-1 border-r border-b text-right w-32"><input type="text" id="tripAmt-${tripRowCount}" class="table-input text-right font-bold text-[#19736E] text-[14px] whitespace-nowrap" readonly value="0"></td><td class="p-1 border-r border-b text-center w-20 bg-slate-50 font-medium text-[12.3px] whitespace-nowrap">출장일수</td><td class="p-1 border-r border-b text-center w-12 bg-white"><input type="number" oninput="calcTripAllowance(${tripRowCount})" id="tripDays-${tripRowCount}" class="table-input text-center bg-white rounded border border-teal-100" placeholder="0"></td><td class="p-1 border-r border-b text-center w-20 bg-slate-50 font-medium text-[12.3px] whitespace-nowrap">출장기간</td><td class="p-1 border-r border-b text-center bg-white"><div contenteditable="true" class="editable-cell text-center" placeholder="기간"></div></td><td class="p-1 border-r border-b text-center w-16 bg-slate-50 font-medium text-[12.3px] whitespace-nowrap">출장지</td><td class="p-1 border-b text-center bg-white"><div contenteditable="true" class="editable-cell text-center" placeholder="출장지"></div></td><td class="p-1 border-b text-center no-print w-6 bg-white"><button onclick="removeTripRow(this)" class="text-red-200 hover:text-red-500 text-xs">×</button></td>`;
+            if(tripRowCount === 1) { const initialTr = tbody.querySelector('tr'); initialTr.innerHTML = labelCell.outerHTML + tr.innerHTML; } else { tbody.appendChild(tr); }
+            updateTotals();
+        }
+
+        function removeTripRow(btn) {
+            if(tripRowCount <= 1) return; const tr = btn.closest('tr');
+            if(tr.querySelector('#tripLabel')) { const nextTr = tr.nextElementSibling; if(nextTr) { const labelCell = document.getElementById('tripLabel'); nextTr.insertBefore(labelCell, nextTr.firstChild); } }
+            tr.remove(); tripRowCount--; document.getElementById('tripLabel').rowSpan = tripRowCount; calcTripAllowanceAll();
+        }
+
+        function calcTripAllowance(idx) { const daysInp = document.getElementById(`tripDays-${idx}`); const amtInp = document.getElementById(`tripAmt-${idx}`); const days = parseInt(daysInp.value) || 0; amtInp.value = (days * 30000).toLocaleString(); calcTripAllowanceAll(); }
+        function calcTripAllowanceAll() { let total = 0; document.querySelectorAll('[id^="tripAmt-"]').forEach(inp => total += unformatComma(inp.value)); document.getElementById('totalTripAllowance').innerText = total.toLocaleString(); updateTotals(); }
+
+        function toggleFuelTypeInputs() { const type = document.getElementById('fuelType').value; document.getElementById('iceInputs').classList.toggle('hidden-el', type === 'EV'); document.getElementById('evInputs').classList.toggle('hidden-el', type !== 'EV'); }
+        function updateSortAttributes(input) { const tr = input.closest('tr'); tr.setAttribute('data-month', tr.querySelector('.val-month').value || 99); tr.setAttribute('data-day', tr.querySelector('.val-day').value || 99); sortAndReindex(); }
+        function reIndexRows() { let seq = 1; document.querySelectorAll('#tableBody tr').forEach(row => { const seqInput = row.querySelector('.val-seq'); const m = row.querySelector('.val-month')?.value; const d = row.querySelector('.val-day')?.value; if (seqInput && (m || d)) seqInput.value = seq++; else if (seqInput) seqInput.value = ""; }); }
+        function deleteRow(btn) { const tr = btn.closest('tr'); const key = tr.getAttribute('data-receipt-key'); if (key) existingReceipts.delete(key); tr.remove(); updateTotals(); reIndexRows(); }
+
+        // --- 누락 함수 구현 (AI 결과 행 추가, 정렬) ---
+        function addAIResultRow(res, peopleCount, key) {
+            const tbody = document.getElementById('tableBody');
+            const tr = document.createElement('tr');
+            tr.className = "border-b hover:bg-gray-50 transition";
+            tr.setAttribute('data-month', res.month || 99);
+            tr.setAttribute('data-day', res.day || 99);
+            if (key) tr.setAttribute('data-receipt-key', key);
+            const m = res.month || '';
+            const d = res.day || '';
+            const amt = res.amount || 0;
+            const col = res.categoryIndex || 9;
+            const memo = (peopleCount > 1 ? `[${peopleCount}명] ` : '') + (res.merchant || '');
+            const formattedAmt = amt ? amt.toLocaleString() : '';
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateSortAttributes(this)"></td>${[1,2,3,4,5,6,7,8,9].map(i => {
+                const v = (i === col) ? formattedAmt : '';
+                const cls = (i === 1 && unformatComma(v) > 12000) ? 'meal-limit-warning' : (i === 2 ? 'font-bold text-blue-800' : (i === 3 ? 'font-bold text-emerald-700' : ''));
+                return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();" class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
+            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print text-center"><button onclick="deleteRow(this)" class="text-red-300 hover:text-red-500">×</button></td>`;
+            tbody.appendChild(tr);
+            updateTotals();
+        }
+
+        function updateExistingRow(res, peopleCount, key) {
+            // 같은 영수증 중복 업로드 시: 기존 행에 금액 누적하지 않고 그대로 유지
+            // (백엔드가 페이지별로 분리해서 보내는 경우도 있어, 중복은 무시)
+            return;
+        }
+
+        function sortAndReindex() {
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                const am = parseInt(a.getAttribute('data-month')) || 99;
+                const bm = parseInt(b.getAttribute('data-month')) || 99;
+                if (am !== bm) return am - bm;
+                const ad = parseInt(a.getAttribute('data-day')) || 99;
+                const bd = parseInt(b.getAttribute('data-day')) || 99;
+                return ad - bd;
+            });
+            rows.forEach(r => tbody.appendChild(r));
+            reIndexRows();
+        }
+
+        function sortAndReindexOverseas() {
+            const tbody = document.getElementById('overseasTableBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                const am = parseInt(a.getAttribute('data-month')) || 99;
+                const bm = parseInt(b.getAttribute('data-month')) || 99;
+                if (am !== bm) return am - bm;
+                const ad = parseInt(a.getAttribute('data-day')) || 99;
+                const bd = parseInt(b.getAttribute('data-day')) || 99;
+                return ad - bd;
+            });
+            rows.forEach(r => tbody.appendChild(r));
+            reIndexOverseasRows();
+        }
+
+        function cancelProcessing() {
+            isProcessingCanceled = true;
+            document.getElementById('processingOverlay').classList.add('hidden-el');
+        }
+
+        // --- OVERSEAS UI Functions ---
+        function addOverseasRow(pre = null) {
+            const tbody = document.getElementById('overseasTableBody'); const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50 transition";
+            const m = pre?.month || "", d = pre?.day || "", memo = pre?.memo || "", amt = pre?.amount || "", curr = pre?.currency || "";
+            tr.setAttribute('data-month', m || 99); tr.setAttribute('data-day', d || 99);
+            let catInputs = '';
+            for(let i=1; i<=9; i++) { const val = (pre && pre.categoryIndex === i) ? (amt ? amt.toLocaleString() : "") : ""; catInputs += `<td class="border-r"><input type="text" class="table-input ovs-cat-${i} ovs-cost-input text-right text-gray-700" value="${val}" oninput="formatComma(this, true); calcOvsRow(this);" placeholder="0"></td>`; }
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateOvsSortAttributes(this)"></td>${catInputs}<td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${curr}" placeholder="USD" onchange="autoFetchRate(this, false)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" oninput="formatComma(this, true); calcOvsRow(this);" placeholder="0.00"><button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder="0"></td><td class="border-r"><input type="text" class="table-input ovs-seq" placeholder="번호"></td><td class="relative"><div contenteditable="true" class="editable-cell ovs-memo-input pr-10" placeholder="적요">${memo || ''}</div>${pre ? `<button onclick="this.closest('tr').classList.remove('row-ai-pending'); this.remove();" class="no-print absolute right-1 top-1/2 -translate-y-1/2 bg-amber-500 text-white text-[9px] px-1 py-0.5 rounded shadow">확인</button>` : ''}</td><td class="no-print text-center"><button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-300 hover:text-red-500">×</button></td>`;
+            if (pre) tr.classList.add('row-ai-pending');
+            tbody.appendChild(tr); reIndexOverseasRows(); if (pre && curr) autoFetchRate(tr.querySelector('.ovs-rate').nextElementSibling, false, true); 
+        }
+
+        async function fetchAverageRate() {
+            const start = document.getElementById('tripStartDate').value; const end = document.getElementById('tripEndDate').value;
+            if (!start || !end) return alert("출장 시작일과 도착일을 모두 입력해주세요.");
+            const btn = document.getElementById('avgCalcBtn'); const originalText = btn.innerHTML; btn.innerHTML = `<div class="loader-small mx-auto border-white"></div>`; btn.disabled = true;
+            try {
+                const currencies = new Set(); document.querySelectorAll('.ovs-curr, .ovs-trip-curr').forEach(el => { const c = el.value.trim().toUpperCase(); if (c && c !== 'KRW' && c !== '원' && c !== '원화') currencies.add(c); });
+                if (currencies.size === 0) { alert("표에 입력된 외화 내역이 없습니다."); return; }
+                let resultsLog = []; let successCount = 0;
+                for (const curr of currencies) {
+                    let finalRate = 0; let isFallback = false;
+                    try { const res = await fetch(`https://api.frankfurter.dev/v1/${start}..${end}?base=${curr}&symbols=KRW`); if (res.ok) { const text = await res.text(); const data = JSON.parse(text); if (data.rates) { let sum = 0, count = 0; for (const date in data.rates) { if(data.rates[date].KRW) { sum += data.rates[date].KRW; count++; } } if (count > 0) finalRate = sum / count; } } } catch(e) {}
+                    if (finalRate === 0) { try { const fallbackRes = await fetch(`https://open.er-api.com/v6/latest/${curr}`); if (fallbackRes.ok) { const fallbackText = await fallbackRes.text(); const fallbackData = JSON.parse(fallbackText); if(fallbackData.rates && fallbackData.rates.KRW) { finalRate = fallbackData.rates.KRW; isFallback = true; } } } catch(e) {} }
+                    if (finalRate > 0) {
+                        successCount++; resultsLog.push(`- ${curr}: ${finalRate.toFixed(2)}원`);
+                        document.querySelectorAll('#overseasTableBody tr').forEach(row => { if (row.querySelector('.ovs-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-rate').value = finalRate.toFixed(2); calcOvsRow(row.querySelector('.ovs-rate')); } });
+                        document.querySelectorAll('#overseasTripBody tr').forEach(row => { if (row.querySelector('.ovs-trip-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-trip-rate').value = finalRate.toFixed(2); calcOvsTripRow(row.querySelector('.ovs-trip-rate')); } });
+                    }
+                }
+                alert(`✅ 총 ${successCount}개 통화 연동 완료`);
+            } catch (e) { alert("환율 연동 오류"); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+        }
+
+        async function autoFetchRate(btnOrInput, isTrip = false, silent = false) {
+            const tr = btnOrInput.closest('tr'); if(!tr) return;
+            let currency = tr.querySelector(isTrip ? '.ovs-trip-curr' : '.ovs-curr').value.trim().toUpperCase();
+            const rateInput = tr.querySelector(isTrip ? '.ovs-trip-rate' : '.ovs-rate');
+            const btn = tr.querySelector('button');
+            if(!currency) return;
+            if(currency === 'KRW' || currency === '원' || currency === '원화') { tr.querySelector(isTrip ? '.ovs-trip-curr' : '.ovs-curr').value = 'KRW'; rateInput.value = "1"; if(isTrip) calcOvsTripRow(rateInput); else calcOvsRow(rateInput); return; }
+            let originalIcon = ""; if(btn) { originalIcon = btn.innerHTML; btn.innerHTML = `<div class="loader-small mx-auto border-indigo-400 border-t-transparent"></div>`; }
+            try {
+                const res = await fetch(`https://open.er-api.com/v6/latest/${currency}`);
+                if(res.ok) { const text = await res.text(); const data = JSON.parse(text); if(data.rates && data.rates.KRW) { let rate = data.rates.KRW; rateInput.value = rate.toFixed(2); formatComma(rateInput, true); if(isTrip) calcOvsTripRow(rateInput); else calcOvsRow(rateInput); } }
+            } catch(e) { if(!silent) console.error("환율 연동 에러"); } finally { if(btn) btn.innerHTML = originalIcon; }
+        }
+
+        function calcOvsRow(inp) { const tr = inp.closest('tr'); let fcAmt = 0; for(let i=1; i<=9; i++) fcAmt += unformatComma(tr.querySelector(`.ovs-cat-${i}`).value); const rate = unformatComma(tr.querySelector('.ovs-rate').value); const krwAmt = Math.round(fcAmt * rate); tr.querySelector('.ovs-krw-amt').value = krwAmt > 0 ? krwAmt.toLocaleString() : ''; updateOverseasTotals(); }
+        function updateOverseasTotals() {
+            let catTotals = [0,0,0,0,0,0,0,0,0]; let grandKrw = 0;
+            document.querySelectorAll('#overseasTableBody tr').forEach(row => { for(let i=1; i<=9; i++) catTotals[i-1] += unformatComma(row.querySelector(`.ovs-cat-${i}`).value); grandKrw += unformatComma(row.querySelector('.ovs-krw-amt').value); });
+            for(let i=1; i<=9; i++) { const el = document.getElementById(`ovs-total-0${i}`); if(el) el.innerText = catTotals[i-1] > 0 ? catTotals[i-1].toLocaleString() : '0'; }
+            document.getElementById('overseasFooterTotal').innerText = grandKrw.toLocaleString();
+            const tripKrw = unformatComma(document.getElementById('overseasTripFooterTotal')?.innerText || '0'); const finalStr = (grandKrw + tripKrw).toLocaleString();
+            document.getElementById('overseasGrandTotal').innerText = finalStr;
+        }
+
+        function addOverseasTripRow() {
+            const tbody = document.getElementById('overseasTripBody'); const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50 transition";
+            tr.innerHTML = `<td class="border-r"><div contenteditable="true" class="editable-cell text-center" placeholder="기간"></div></td><td class="border-r"><div contenteditable="true" class="editable-cell text-center" placeholder="국가/도시"></div></td><td class="border-r"><select class="table-input ovs-trip-region text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option><option value="A">가 지역</option><option value="B">나 지역</option><option value="C">다 지역</option></select></td><td class="border-r"><select class="table-input ovs-trip-rank text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">직급 선택</option><option value="exec">임원</option><option value="gm">부장</option><option value="dgm">차장</option><option value="manager">과장</option><option value="am">대리</option><option value="sv">주임</option><option value="staff">사원</option></select></td><td class="border-r"><select class="table-input ovs-trip-base text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-blue-700" onchange="autoSetPerDiem(this)"><option value="fc">외화</option><option value="krw">원화</option></select></td><td class="border-r"><input type="number" class="table-input ovs-trip-days text-center" placeholder="0" oninput="calcOvsTripRow(this)"></td><td class="border-r"><input type="text" class="table-input ovs-trip-price text-right text-blue-700 font-bold" placeholder="0" oninput="formatComma(this, true); calcOvsTripRow(this);"></td><td class="border-r"><input type="text" class="table-input ovs-trip-curr uppercase font-bold text-gray-600" value="USD" placeholder="USD" onchange="autoSetPerDiem(this)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-trip-rate text-right text-indigo-700 font-bold pr-6" placeholder="0.00" oninput="formatComma(this, true); calcOvsTripRow(this);"><button onclick="autoFetchRate(this, true)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-trip-krw text-right font-bold text-blue-900" readonly value="" placeholder="0"></td><td class="border-r"><div contenteditable="true" class="editable-cell text-left" placeholder="비고"></div></td><td class="no-print text-center"><button onclick="this.closest('tr').remove(); updateOverseasTotals();" class="text-red-300 hover:text-red-500">×</button></td>`;
+            tbody.appendChild(tr);
+        }
+        function calcOvsTripRow(inp) { const tr = inp.closest('tr'); const days = parseFloat(tr.querySelector('.ovs-trip-days').value) || 0; const price = unformatComma(tr.querySelector('.ovs-trip-price').value); const rate = unformatComma(tr.querySelector('.ovs-trip-rate').value); const krw = Math.round(days * price * rate); tr.querySelector('.ovs-trip-krw').value = krw > 0 ? krw.toLocaleString() : ''; let tripTotal = 0; document.querySelectorAll('.ovs-trip-krw').forEach(el => tripTotal += unformatComma(el.value)); document.getElementById('overseasTripFooterTotal').innerText = tripTotal.toLocaleString(); updateOverseasTotals(); }
+        function updateOvsSortAttributes(input) { const tr = input.closest('tr'); tr.setAttribute('data-month', tr.querySelector('.val-month').value || 99); tr.setAttribute('data-day', tr.querySelector('.val-day').value || 99); sortAndReindexOverseas(); }
+        function reIndexOverseasRows() { let seq = 1; document.querySelectorAll('#overseasTableBody tr').forEach(row => { const seqInput = row.querySelector('.ovs-seq'); const m = row.querySelector('.val-month')?.value; const d = row.querySelector('.val-day')?.value; if (seqInput && (m || d)) seqInput.value = seq++; else if (seqInput) seqInput.value = ""; }); }
+    </script>
 </body>
 </html>
