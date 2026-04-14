@@ -7,3 +7,5 @@ __pycache__/
 *.pyc
 server.log
 nssm.exe
+wheels/
+wheels.zip
