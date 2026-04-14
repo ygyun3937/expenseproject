@@ -36,6 +36,7 @@ from flask import Flask, request, jsonify, render_template
 from config import Config, ConfigError
 from image_preprocessor import preprocess_image
 from receipt_processor import ReceiptProcessor, AllModelsFailedError
+from exchange_rate import fetch_rates, fetch_latest
 
 
 def pdf_to_images(pdf_bytes: bytes) -> list[bytes]:
@@ -56,6 +57,10 @@ def create_app(testing=False):
     @app.route("/")
     def index():
         return render_template("index.html")
+
+    @app.route("/guide")
+    def guide():
+        return render_template("guide.html")
 
     @app.route("/vendor/tailwind.js")
     def tailwind_js():
@@ -124,6 +129,44 @@ def create_app(testing=False):
                     results.append({"filename": name, "error": str(e)})
 
         return jsonify(results)
+
+    @app.route("/api/config", methods=["GET"])
+    def api_config():
+        """프론트가 사용하는 회사 규정 설정(읽기 전용)."""
+        try:
+            cfg = Config()
+        except ConfigError:
+            cfg = None
+        meal_limit = cfg.meal_limit_per_person if cfg else 12000
+        lodging_limit = cfg.lodging_limit_per_night if cfg else 70000
+        return jsonify({"meal_limit_per_person": meal_limit, "lodging_limit_per_night": lodging_limit})
+
+    @app.route("/api/exchange-rate", methods=["GET"])
+    def api_exchange_rate():
+        """서울외국환중개 매매기준율 조회.
+
+        Query params:
+            currency (required): ISO 통화코드 (USD, JPY 등). KRW는 {rate: 1}.
+            start, end (optional): YYYY-MM-DD. 둘 다 있으면 기간 평균.
+                                   없으면 최근 영업일 단건.
+        """
+        currency = (request.args.get("currency") or "").strip().upper()
+        if not currency:
+            return jsonify({"error": "currency 파라미터가 필요합니다."}), 400
+        if currency == "KRW":
+            return jsonify({
+                "currency": "KRW", "rate": 1, "source": "KRW",
+                "business_days": 0, "daily": [],
+            })
+        start = request.args.get("start")
+        end = request.args.get("end")
+        try:
+            res = fetch_rates(currency, start, end) if (start and end) else fetch_latest(currency)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 404
+        except Exception as e:
+            return jsonify({"error": f"서울외국환중개 조회 실패: {e}"}), 502
+        return jsonify(res._asdict())
 
     return app
 

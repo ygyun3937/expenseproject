@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>MAK 경비정산서 — 사용자 가이드</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --blue: #1e3a8a; --blue-light: #eff6ff; --gray: #475569; --border: #e2e8f0; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; margin: 0; color: #1f2937; background: #f8fafc; line-height: 1.6; }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 80px; }
+  header { border-bottom: 3px solid var(--blue); padding-bottom: 16px; margin-bottom: 24px; }
+  header h1 { color: var(--blue); margin: 0 0 4px; font-size: 26px; }
+  header .sub { color: var(--gray); font-size: 13px; }
+  nav.toc { background: white; border: 1px solid var(--border); border-left: 4px solid var(--blue); border-radius: 6px; padding: 16px 20px; margin-bottom: 28px; }
+  nav.toc h2 { font-size: 14px; color: var(--blue); margin: 0 0 8px; }
+  nav.toc ul { margin: 0; padding-left: 20px; font-size: 13px; }
+  nav.toc a { color: var(--gray); text-decoration: none; }
+  nav.toc a:hover { color: var(--blue); text-decoration: underline; }
+  section { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 24px 28px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  section h2 { color: var(--blue); font-size: 19px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 0; }
+  section h3 { color: #334155; font-size: 15px; margin-top: 20px; }
+  p, li { font-size: 14px; }
+  code { background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-size: 13px; color: #be185d; }
+  kbd { background: #f8fafc; border: 1px solid #cbd5e1; border-bottom-width: 2px; border-radius: 4px; padding: 2px 6px; font-size: 12px; font-family: monospace; }
+  .tip { background: #ecfdf5; border-left: 4px solid #10b981; padding: 10px 14px; border-radius: 4px; margin: 10px 0; font-size: 13px; }
+  .warn { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 4px; margin: 10px 0; font-size: 13px; }
+  .note { background: var(--blue-light); border-left: 4px solid var(--blue); padding: 10px 14px; border-radius: 4px; margin: 10px 0; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+  th { background: #f8fafc; color: var(--gray); }
+  .badge { display: inline-block; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+  .back-btn { display: inline-block; background: var(--blue); color: white; padding: 8px 18px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: bold; }
+  .back-btn:hover { background: #1e40af; }
+  footer { text-align: center; color: #94a3b8; font-size: 12px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>📖 MAK 경비정산서 사용자 가이드</h1>
+  <div class="sub">Expense Report System · 최종 업데이트 2026-04-14</div>
+</header>
+
+<a href="/" class="back-btn">← 정산서로 돌아가기</a>
+
+<nav class="toc">
+  <h2>목차</h2>
+  <ul>
+    <li><a href="#start">1. 시작하기</a></li>
+    <li><a href="#ai">2. 영수증 AI 자동 분석</a></li>
+    <li><a href="#meal">3. 식비 한도 · 1인당 정산</a></li>
+    <li><a href="#lodging">3-1. 숙박비 한도 · 1인 1박 정산</a></li>
+    <li><a href="#fuel">4. 차량 유류비 정산</a></li>
+    <li><a href="#trip">5. 출장일비 정산</a></li>
+    <li><a href="#overseas">6. 해외 개인경비 · 환율</a></li>
+    <li><a href="#save">7. 임시저장 · 불러오기</a></li>
+    <li><a href="#print">8. 정산서 인쇄 · PDF</a></li>
+    <li><a href="#faq">9. 자주 묻는 질문</a></li>
+  </ul>
+</nav>
+
+<section id="start">
+  <h2>1. 시작하기</h2>
+  <p>본 시스템은 회사 개인경비 영수증을 업로드하면 AI가 자동으로 금액·날짜·카테고리를 인식하여 정산서를 작성해 주는 도구입니다.</p>
+  <h3>기본 흐름</h3>
+  <ol>
+    <li>상단 탭에서 <b>국내 개인경비</b> 또는 <b>해외 개인경비</b> 선택 <span class="badge">🚧 해외 개발 중</span></li>
+    <li>작성자 정보(성명 · 소속 부서 · 정산 차수 · 작성 일자) 입력</li>
+    <li>영수증 업로드(AI 분석) 또는 <b>항목 추가</b> 버튼으로 수동 입력</li>
+    <li>필요 시 차량 유류비 · 출장일비 입력</li>
+    <li><b>정산서 인쇄</b> 버튼으로 출력 또는 PDF 저장</li>
+  </ol>
+</section>
+
+<section id="ai">
+  <h2>2. 영수증 AI 자동 분석</h2>
+  <h3>업로드 방법</h3>
+  <ul>
+    <li>업로드 영역을 <b>클릭</b>하여 파일 선택 (여러 장 가능)</li>
+    <li>파일을 영역으로 <b>드래그&amp;드롭</b></li>
+    <li>클립보드에 캡처한 이미지를 <kbd>Ctrl</kbd> + <kbd>V</kbd> 붙여넣기</li>
+    <li>지원 포맷: 이미지(PNG · JPG 등) · PDF</li>
+  </ul>
+
+  <div class="tip">
+    <b>✅ 기존 입력 내역은 유지됩니다.</b> 영수증을 추가로 업로드해도 이미 입력한 행은 그대로 남고, 새 영수증만 하단에 추가됩니다. (중복 업로드 시 같은 영수증은 자동 무시)
+  </div>
+
+  <div class="warn">
+    <b>⚠ 한 파일당 영수증 1장만 업로드하세요.</b><br>
+    여러 영수증이 <b>한 파일 안에 같이 스캔·촬영</b>되어 있으면 AI가 가장 눈에 띄는 한 건만 인식하거나, 금액·항목을 뒤섞어 잘못 판독할 수 있습니다.<br>
+    · PDF 여러 페이지 = 각 페이지가 별도 영수증으로 처리됨 (OK)<br>
+    · 이미지 한 장에 영수증 2장 붙여넣기 = <b>권장하지 않음</b> (1장당 1파일 원칙)
+  </div>
+
+  <h3>AI가 자동 인식하는 항목</h3>
+  <table>
+    <tr><th>항목</th><th>설명</th></tr>
+    <tr><td>월/일</td><td>영수증의 결제일</td></tr>
+    <tr><td>금액</td><td>합계 금액(마이너스 기호는 절대값으로 변환)</td></tr>
+    <tr><td>카테고리</td><td>식비·유류비·교통비·주차비·숙박비·접대비·소모품·운반비·기타</td></tr>
+    <tr><td>업체명</td><td>비고 칸에 자동 기입</td></tr>
+    <tr><td>인원수</td><td>영수증에 "3명/3인/3인분" 표기가 있으면 자동 인식</td></tr>
+  </table>
+
+  <div class="note">
+    <b>인원수 인식 팁</b><br>
+    · 영수증에 손글씨·스탬프로 "3명" "4인" 등이 적혀 있으면 AI가 읽어냅니다.<br>
+    · 파일명에 <code>점심_3명.jpg</code> 처럼 표기해도 인식됩니다.<br>
+    · AI가 못 읽은 경우 기본 1명으로 처리되며, 비고 칸 수정으로 대응 가능합니다.
+  </div>
+</section>
+
+<section id="meal">
+  <h2>3. 식비 한도 · 1인당 정산</h2>
+  <p>회사 규정에 따라 <b>식비는 1인당 12,000원까지만</b> 정산됩니다. 초과 금액은 자동으로 한도까지만 셀에 기록되며, 원본 금액은 비고에 <code>[한도적용 원금 XX,XXX]</code> 형태로 자동 기록됩니다.</p>
+
+  <h3>한도 적용 예시</h3>
+  <table>
+    <tr><th>상황</th><th>결과</th></tr>
+    <tr><td>1명 · 10,000원</td><td>식비 10,000원 그대로</td></tr>
+    <tr><td>1명 · 15,000원</td><td>식비 <b>12,000원</b> + 비고 「[한도적용 원금 15,000] ...」</td></tr>
+    <tr><td>3명 · 30,000원</td><td>식비 30,000원 (한도 36,000원 이내)</td></tr>
+    <tr><td>3명 · 40,000원</td><td>식비 <b>36,000원</b> + 비고 「[한도적용 원금 40,000] [3명] ...」</td></tr>
+  </table>
+
+  <h3>수기 입력 시 인원 반영</h3>
+  <div class="note">
+    수동으로 항목을 추가한 경우(영수증 AI 업로드가 아닌 경우) 기본 인원은 <b>1명</b> 으로 처리됩니다.<br>
+    여러 인원 회식이면 <b>비고 칸에 <code>[3명]</code> 또는 <code>[3인]</code></b> 형태로 적어주세요. 자동으로 해당 행 인원수가 업데이트되고 한도가 재계산됩니다.<br>
+    · 숙박도 동일 — <code>[2박]</code> 형태로 기입하면 반영<br>
+    · 예: 식비 칸에 <code>40,000</code> + 비고에 <code>[3명] 탕화쿵푸마라탕</code> → 한도 36,000원(12,000×3) 적용되어 40,000 → 36,000으로 자동 캡
+  </div>
+
+  <h3>경고 표시 2종</h3>
+  <ul>
+    <li><b style="color:#dc2626;">🔴 빨간색 배경</b> — 1인당 한도 초과 (자동 캡 적용됨)</li>
+    <li><b style="color:#92400e;">🟠 호박색 점선</b> — 출장일비 기간 내 식비 중복 청구 (이중 청구 위험). 출장일비에는 식대가 포함돼 있으므로 같은 날짜 식비는 별도 청구 불가</li>
+  </ul>
+
+  <div class="note">
+    <b>출장일비 기간 내 식비 경고 작동 방식</b><br>
+    · 출장일비 기간(시작일~종료일) 내의 날짜에 식비가 입력되면 <b>식비 셀 + 출장 기간 셀 양쪽 모두 호박색 경고</b>로 표시됩니다.<br>
+    · 예: 출장 기간 `2026-04-10 ~ 2026-04-12`, 개인경비 4월 11일 식비 → 양쪽 경고<br>
+    · 해결: 해당 식비는 삭제하거나, 출장일비에서 해당 일자를 제외
+  </div>
+
+  <div class="warn">
+    <b>⚠ 한도 설정은 회사 규정</b>입니다. 변경이 필요한 경우 관리자에게 문의하세요. (서버 <code>.env</code>의 <code>MEAL_LIMIT_PER_PERSON</code> 설정)
+  </div>
+</section>
+
+<section id="lodging">
+  <h2>3-1. 숙박비 한도 · 1인 1박 정산</h2>
+  <p>국내 출장 숙박비는 <b>1인 1박 70,000원까지만</b> 정산됩니다. 초과 금액은 자동으로 한도까지만 셀에 기록되며, 원본 금액은 비고에 <code>[한도적용 원금 XX,XXX]</code> 형태로 자동 기록됩니다.</p>
+
+  <table>
+    <tr><th>상황</th><th>결과</th></tr>
+    <tr><td>1인 · 1박 · 60,000원</td><td>숙박비 60,000원 그대로</td></tr>
+    <tr><td>1인 · 1박 · 90,000원</td><td>숙박비 <b>70,000원</b> + 비고 「[한도적용 원금 90,000] ...」</td></tr>
+    <tr><td>2인 · 2박 · 250,000원</td><td>숙박비 250,000원 (한도 280,000원 이내)</td></tr>
+    <tr><td>2인 · 2박 · 320,000원</td><td>숙박비 <b>280,000원</b> (70,000×2×2) + 비고 「[한도적용 원금 320,000] ...」</td></tr>
+  </table>
+
+  <div class="note">
+    <b>박수(숙박일수) 자동 인식</b><br>
+    · 영수증에 "2박", "2일" 또는 체크인/체크아웃 날짜가 있으면 AI가 자동 파싱<br>
+    · 파일명에 <code>출장숙박_2박.jpg</code> 형태도 인식<br>
+    · 인식 안 되면 기본 1박으로 처리 → 비고 칸 수동 수정
+  </div>
+
+  <div class="warn">
+    <b>⚠ 한도 설정은 회사 규정</b>입니다. 변경이 필요한 경우 관리자에게 문의하세요. (서버 <code>.env</code>의 <code>LODGING_LIMIT_PER_NIGHT</code> 설정)
+  </div>
+</section>
+
+<section id="fuel">
+  <h2>4. 차량 유류비 정산</h2>
+  <p>국내 개인경비 탭 상단의 <b>🚗 차량 유류비 정산</b> 섹션을 펼쳐 사용합니다. (기본 접힘 상태)</p>
+
+  <h3>입력 순서</h3>
+  <ol>
+    <li><b>차종 · 차량번호</b> 입력</li>
+    <li><b>유종</b> 선택 (휘발유 8km/ℓ · 경유 7km/ℓ · LPG 5km/ℓ · 전기EV)</li>
+    <li>유종에 맞는 단가 입력 (유가 또는 전력량/전비/기본료)</li>
+    <li><b>항목 추가</b>로 주행 건마다 일자 · 출발/도착지 · 거리(km) · 통행료 입력</li>
+    <li><b>정산 반영</b> 버튼 클릭 → 자동 계산된 유류비와 통행료가 개인경비 표의 유류비/교통비 칼럼에 추가됩니다</li>
+  </ol>
+
+  <h3>계산 공식</h3>
+  <ul>
+    <li>일반 연료: <code>유류비 = (주행거리 ÷ 연비) × 유가</code></li>
+    <li>전기차: <code>유류비 = 기본료 + (주행거리 × 전력량단가 ÷ 복합전비)</code></li>
+  </ul>
+
+  <div class="tip">
+    유류비 내역이 없으면 인쇄 시 자동으로 <b>유류비 페이지 생략</b>됩니다.
+  </div>
+</section>
+
+<section id="trip">
+  <h2>5. 출장일비 정산</h2>
+  <p>국내 출장 시 <b>1일 30,000원</b>이 자동 계산됩니다. 출장 건마다 <b>항목 추가</b>로 일수 · 기간 · 출장지를 입력하면 금액이 자동 산정됩니다.</p>
+
+  <h3>출장 기간 입력 — 달력 선택</h3>
+  <ul>
+    <li>기간 칸은 <b>시작일 · 종료일 두 개의 날짜 선택기(달력)</b> 로 구성되어 있습니다.</li>
+    <li>각 칸 클릭 → 캘린더 팝업에서 날짜 선택</li>
+    <li>수기 입력 불필요, 포맷 오류 원천 차단</li>
+  </ul>
+
+  <h3>이중 청구 방지 경고 (출장일비 ↔ 식비)</h3>
+  <div class="note">
+    출장일비에는 <b>식대가 이미 포함</b>되어 있습니다. 같은 날짜에 개인경비 식비를 함께 청구하면 이중 청구가 되므로:
+    <ul style="margin-top:8px;">
+      <li>출장 기간 내 날짜로 식비 입력 시 → <b style="color:#92400e;">해당 식비 셀 + 출장 기간 셀 양쪽이 호박색 점선 경고</b></li>
+      <li>출장 기간이 비어 있으면 경고 작동 안 함 → 반드시 기간 입력 먼저</li>
+      <li>체크 시점: 식비 금액·월·일 입력, 출장 기간 수정 시마다 자동 재확인</li>
+    </ul>
+  </div>
+
+  <div class="note">출장일비 입력 내역(기간 · 일수 · 출장지)은 <b>임시저장</b>에 모두 포함됩니다.</div>
+</section>
+
+<section id="overseas">
+  <h2>6. 해외 개인경비 · 환율 <span class="badge">🚧 개발 중</span></h2>
+  <p>해외 탭은 현재 개발 중이며 일부 기능이 동작합니다.</p>
+
+  <h3>환율 조회 방식</h3>
+  <ul>
+    <li><b>출처:</b> 서울외국환중개(<code>smbs.biz</code>) 매매기준율 (단일 공신력 소스)</li>
+    <li><b>단건 조회:</b> 해외경비 행의 🔄 버튼 → 최근 영업일 매매기준율</li>
+    <li><b>기간 평균:</b> 출장 시작일/도착일 입력 후 <b>평균 환율 일괄 연동</b> 버튼 → 영업일 평균</li>
+    <li><b>JPY 특수 처리:</b> 서울외국환중개는 100엔 기준 고시 → 자동으로 ÷100 하여 1엔 기준 환산</li>
+  </ul>
+
+  <h3>원화 환산 공식</h3>
+  <ul>
+    <li>일반 해외경비: <code>원화 = 외화금액 × 환율</code></li>
+    <li>해외 출장일비: <code>원화 = 일수 × 외화단가 × 환율</code></li>
+  </ul>
+
+  <div class="warn">
+    서울외국환중개 사이트 장애 시 환율이 자동 입력되지 않을 수 있습니다. 이 경우 환율 칸에 <b>수동 입력</b>해 주세요.
+  </div>
+</section>
+
+<section id="save">
+  <h2>7. 임시저장 · 불러오기</h2>
+  <p>상단 우측 <b>임시저장 / 불러오기</b> 버튼으로 현재 입력 내역을 브라우저에 저장/복원할 수 있습니다.</p>
+
+  <h3>저장 범위</h3>
+  <ul>
+    <li>작성자 정보(성명 · 부서 · 차수 · 작성일)</li>
+    <li>차량 정보(차종 · 차량번호) 및 유종 설정</li>
+    <li>유류비 주행 로그 전체</li>
+    <li>출장일비 행 전체</li>
+    <li>개인경비 표 각 행(월/일/금액/비고)</li>
+    <li>해외 출장 시작일/도착일 및 해외경비 표</li>
+  </ul>
+
+  <div class="warn">
+    브라우저 <code>localStorage</code>에 저장되므로 <b>다른 PC·브라우저·시크릿 모드</b>에서는 볼 수 없습니다. 영구 보존은 인쇄/PDF로 저장해 주세요.
+  </div>
+</section>
+
+<section id="print">
+  <h2>8. 정산서 인쇄 · PDF</h2>
+  <p>상단의 <b>정산서 인쇄</b> 버튼 → 브라우저 인쇄 대화상자에서 프린터 출력 또는 "PDF로 저장" 선택.</p>
+
+  <h3>자동 최적화 동작</h3>
+  <ul>
+    <li>정산 금액이 0원인 탭(국내 또는 해외)은 <b>인쇄 제외</b></li>
+    <li>유류비 내역이 비어 있으면 <b>유류비 페이지 생략</b></li>
+    <li>비어 있는 입력 행(월/일/금액 모두 공란)은 인쇄 시 자동 숨김</li>
+    <li>식비 한도 초과 경고(빨간색 배경)는 인쇄 시 제거</li>
+    <li>배경색·볼드·컬러 헤더는 인쇄용 중립 톤으로 자동 변환</li>
+  </ul>
+
+  <div class="tip">
+    인쇄 대화상자의 <b>배율</b>은 100%로 두는 것을 권장합니다. 용지는 <b>A4 세로/가로 자동</b>으로 처리됩니다.
+  </div>
+</section>
+
+<section id="faq">
+  <h2>9. 자주 묻는 질문</h2>
+
+  <h3>Q. 영수증을 업로드했는데 결과가 표시 안 됩니다.</h3>
+  <p>A. AI 모델이 영수증을 인식하지 못한 경우입니다. 화면 하단의 <b>❌ 분석 실패 항목</b> 목록을 확인하고, 해당 영수증은 <b>항목 추가</b>로 수동 입력해 주세요.</p>
+
+  <h3>Q. 주차비 영수증이 교통비 칸에 들어갔어요.</h3>
+  <p>A. 최신 버전에서 수정되었습니다. 서버가 구버전이면 관리자에게 업데이트 요청하세요.</p>
+
+  <h3>Q. 식비 한도가 회사 규정과 다릅니다.</h3>
+  <p>A. 기본 12,000원/1인 입니다. 변경은 서버 관리자에게 문의 (<code>MEAL_LIMIT_PER_PERSON</code> 환경변수).</p>
+
+  <h3>Q. 환율이 자동으로 안 불러와집니다.</h3>
+  <p>A. 서울외국환중개 사이트 접속 장애일 수 있습니다. 잠시 후 재시도하거나, 환율을 수동 입력해 주세요.</p>
+
+  <h3>Q. 임시저장한 데이터가 사라졌습니다.</h3>
+  <p>A. 브라우저 캐시 삭제 · 시크릿 모드 종료 · 다른 PC 로그인 시 사라집니다. 중요한 내역은 PDF로 저장해 두세요.</p>
+
+  <h3>Q. 인쇄하면 유류비 섹션이 빈 1페이지로 나옵니다.</h3>
+  <p>A. 최신 버전에서는 유류비 내역이 없으면 유류비 페이지를 자동 생략합니다. 구버전이면 업데이트 필요.</p>
+</section>
+
+<div style="text-align:center; margin: 32px 0;">
+  <a href="/" class="back-btn">← 정산서로 돌아가기</a>
+</div>
+
+<footer>
+  MAK CO., LTD · Expense Report v26.04 · 문의: AX 혁신실
+</footer>
+
+</div>
+</body>
+</html>
