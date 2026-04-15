@@ -15,6 +15,13 @@ from typing import NamedTuple
 
 SOURCE_NAME = "서울외국환중개 매매기준율"
 XML_URL = "http://www.smbs.biz/ExRate/StdExRate_xml.jsp?arr_value={curr}_{start}_{end}"
+
+# 서울외국환중개 고시 기준이 100 단위인 통화 (예: JPY=100엔, VND=100동)
+HUNDRED_BASIS_CURRENCIES = {"JPY", "VND", "IDR"}
+
+# 사용자 입력 통화코드 → 서울외국환중개 실제 조회 코드 매핑
+#   CNY(공식)은 smbs에서 CNH(역외 위안)로 고시됨 → 자동 리다이렉트
+CURRENCY_ALIAS = {"CNY": "CNH"}
 _CACHE: dict[tuple, tuple[float, dict]] = {}
 _TTL_SECONDS = 24 * 60 * 60
 
@@ -67,6 +74,8 @@ def fetch_rates(currency: str, start: str, end: str) -> RateResult:
         ValueError: 기간 내 고시값을 하나도 찾지 못한 경우.
     """
     currency = currency.strip().upper()
+    # 별칭 적용 (예: CNY → CNH)
+    fetch_code = CURRENCY_ALIAS.get(currency, currency)
     key = (currency, start, end)
     now = time.time()
     hit = _CACHE.get(key)
@@ -74,12 +83,13 @@ def fetch_rates(currency: str, start: str, end: str) -> RateResult:
         data = hit[1]
         return RateResult(**data)
 
-    xml_text = _fetch_xml(currency, start, end)
+    xml_text = _fetch_xml(fetch_code, start, end)
     daily = _parse(xml_text)
     if not daily:
-        raise ValueError(f"서울외국환중개에서 {currency} {start}~{end} 기간의 고시환율을 찾을 수 없습니다.")
+        raise ValueError(f"서울외국환중개에서 {currency}({fetch_code}) {start}~{end} 기간의 고시환율을 찾을 수 없습니다.")
 
-    if currency == "JPY":
+    # 100 단위 고시 통화는 1 단위 기준으로 환산
+    if fetch_code in HUNDRED_BASIS_CURRENCIES or currency in HUNDRED_BASIS_CURRENCIES:
         daily = [(d, v / 100.0) for d, v in daily]
 
     avg = sum(v for _, v in daily) / len(daily)

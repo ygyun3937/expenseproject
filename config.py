@@ -29,3 +29,15 @@ class Config:
             self.lodging_limit_per_night = int(os.getenv("LODGING_LIMIT_PER_NIGHT", "70000"))
         except ValueError:
             self.lodging_limit_per_night = 70000
+        # 해외 한도 (원화 기준). 0 이면 미적용.
+        try:
+            self.overseas_meal_limit_per_person = int(os.getenv("OVERSEAS_MEAL_LIMIT_PER_PERSON", "0"))
+        except ValueError:
+            self.overseas_meal_limit_per_person = 0
+        try:
+            self.overseas_lodging_limit_per_night = int(os.getenv("OVERSEAS_LODGING_LIMIT_PER_NIGHT", "0"))
+        except ValueError:
+            self.overseas_lodging_limit_per_night = 0
+        # 유가 조회 시 대상일이 주말/공휴일이면 어느 방향으로 이동할지 ("previous" | "next")
+        direction = os.getenv("FUEL_FALLBACK_DIRECTION", "previous").lower().strip()
+        self.fuel_fallback_direction = direction if direction in ("previous", "next") else "previous"

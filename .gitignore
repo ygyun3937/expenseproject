@@ -9,3 +9,6 @@ server.log
 nssm.exe
 wheels/
 wheels.zip
+settings.json
+learned_categories.json
+fuel_price_history.json

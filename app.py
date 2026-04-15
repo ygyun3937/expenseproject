@@ -37,6 +37,11 @@ from config import Config, ConfigError
 from image_preprocessor import preprocess_image
 from receipt_processor import ReceiptProcessor, AllModelsFailedError
 from exchange_rate import fetch_rates, fetch_latest
+# 유가는 이제 관리자 설정값(settings.json)에 직접 저장 · KNOC 외부 연동 제거
+from excel_export import build_workbook as _build_xlsx
+from settings_store import get_settings, save_settings, ADMIN_PASSWORD
+import category_learner
+from datetime import date as _date
 
 
 def pdf_to_images(pdf_bytes: bytes) -> list[bytes]:
@@ -122,6 +127,11 @@ def create_app(testing=False):
                     processed = preprocess_image(image_bytes)
                     data = processor.process(processed, tab=tab)
                     data["filename"] = name
+                    # 학습된 (상점 → 카테고리) 매핑이 있으면 덮어쓰기 (사용자 수정 이력 반영)
+                    learned = category_learner.lookup(data.get("store_name", ""))
+                    if learned:
+                        data["category"] = learned
+                        data["_learned"] = True
                     results.append(data)
                 except AllModelsFailedError as e:
                     return jsonify({"error": str(e)}), 503
@@ -132,14 +142,84 @@ def create_app(testing=False):
 
     @app.route("/api/config", methods=["GET"])
     def api_config():
-        """프론트가 사용하는 회사 규정 설정(읽기 전용)."""
+        """프론트가 사용하는 회사 규정 설정 (settings.json 우선, 없으면 env)."""
+        return jsonify(get_settings())
+
+    @app.route("/api/learn-category", methods=["POST"])
+    def api_learn_category():
+        """사용자가 카테고리 수정 시 (상점명→카테고리) 매핑 학습."""
+        body = request.get_json(silent=True) or {}
+        merchant = (body.get("merchant") or "").strip()
+        category = (body.get("category") or "").strip()
+        if not merchant or not category:
+            return jsonify({"error": "merchant, category 필수"}), 400
+        category_learner.learn(merchant, category)
+        return jsonify({"ok": True})
+
+    @app.route("/api/learned-categories", methods=["GET"])
+    def api_learned_categories():
+        return jsonify({"items": category_learner.list_all()})
+
+    @app.route("/api/learn-category/delete", methods=["POST"])
+    def api_learn_delete():
+        body = request.get_json(silent=True) or {}
+        merchant = (body.get("merchant") or "").strip()
+        if not merchant:
+            return jsonify({"error": "merchant 필수"}), 400
+        category_learner.delete(merchant)
+        return jsonify({"ok": True})
+
+    @app.route("/api/admin/settings", methods=["POST"])
+    def api_admin_settings():
+        """관리자용 설정 업데이트. 비밀번호 필요."""
+        body = request.get_json(silent=True) or {}
+        if body.get("password") != ADMIN_PASSWORD:
+            return jsonify({"error": "비밀번호가 올바르지 않습니다."}), 401
         try:
-            cfg = Config()
-        except ConfigError:
-            cfg = None
-        meal_limit = cfg.meal_limit_per_person if cfg else 12000
-        lodging_limit = cfg.lodging_limit_per_night if cfg else 70000
-        return jsonify({"meal_limit_per_person": meal_limit, "lodging_limit_per_night": lodging_limit})
+            updated = save_settings(body.get("settings") or {})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        return jsonify({"ok": True, "settings": updated})
+
+    @app.route("/api/export-excel", methods=["POST"])
+    def api_export_excel():
+        """현재 정산 상태를 엑셀(.xlsx)로 변환."""
+        from flask import Response
+        data = request.get_json(silent=True) or {}
+        try:
+            xlsx_bytes = _build_xlsx(data)
+        except Exception as e:
+            return jsonify({"error": f"엑셀 생성 실패: {e}"}), 500
+        name = (data.get("common") or {}).get("userName") or "expense"
+        filename = f"{name}_경비정산_{_date.today().isoformat()}.xlsx"
+        # ASCII-safe 파일명 인코딩
+        import urllib.parse
+        safe = urllib.parse.quote(filename)
+        return Response(
+            xlsx_bytes,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{safe}"},
+        )
+
+    @app.route("/api/fuel-price", methods=["GET"])
+    def api_fuel_price():
+        """유가(원/L) — 관리자 설정값 반환.
+
+        Query: ?type=gasoline|diesel|lpg (미지정 시 전체 반환)
+        """
+        s = get_settings()
+        prices = {
+            "gasoline": s.get("fuel_price_gasoline") or 0,
+            "diesel": s.get("fuel_price_diesel") or 0,
+            "lpg": s.get("fuel_price_lpg") or 0,
+        }
+        typ = (request.args.get("type") or "").lower()
+        if typ in prices:
+            price = prices[typ]
+            if price <= 0:
+                return jsonify({"error": "관리자 설정에 유가가 등록되지 않았습니다. ⚙️ 설정에서 입력해 주세요.", "unavailable": True}), 404
+            return jsonify({"price": price, "source": "관리자 설정"})
+        return jsonify({**prices, "source": "관리자 설정"})
 
     @app.route("/api/exchange-rate", methods=["GET"])
     def api_exchange_rate():
