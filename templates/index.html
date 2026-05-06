@@ -220,10 +220,13 @@
         /* 해외 표: 반응형 고정 레이아웃 — 비고 우선 + 나머지 컬럼 균등 분배 */
         #overseasTable { table-layout: fixed; width: 100%; }
 
-        /* 비고 25% 우선 */
+        /* 비고 20% 우선 (액션 컬럼 폭 확보) */
         #overseasTable thead tr:first-child th:nth-last-child(2),
         #overseasTable tbody td:nth-last-child(2),
-        #overseasTable tfoot td:nth-last-child(2) { width: 25%; }
+        #overseasTable tfoot td:nth-last-child(2) { width: 20%; }
+        /* 액션 컬럼 (no-print) 명시적 폭 — 📎 + × 두 버튼 수용 */
+        #overseasTable thead tr:first-child th:nth-last-child(1),
+        #overseasTable tbody td:nth-last-child(1) { width: 4%; min-width: 50px; }
 
         /* 원화환산액 8% / 환율 8% / 통화 4% / 증빙 3% */
         #overseasTable thead tr:first-child th:nth-last-child(4),
@@ -235,36 +238,43 @@
         #overseasTable thead tr:first-child th:nth-last-child(3),
         #overseasTable tbody td:nth-last-child(3) { width: 3%; }
 
-        /* 월/일 2% 씩 */
+        /* 연 3% / 월 2.5% / 일 2.5% */
         #overseasTable thead tr:first-child th:nth-child(1),
+        #overseasTable tbody td:nth-child(1) { width: 3.5%; }
         #overseasTable thead tr:first-child th:nth-child(2),
-        #overseasTable tbody td:nth-child(1),
-        #overseasTable tbody td:nth-child(2) { width: 2.5%; }
+        #overseasTable thead tr:first-child th:nth-child(3),
+        #overseasTable tbody td:nth-child(2),
+        #overseasTable tbody td:nth-child(3) { width: 2.5%; }
 
-        /* 9개 비용 카테고리 균등 — 남은 공간 (약 45%) ÷ 9 ≈ 5% */
+        /* 9개 비용 카테고리 균등 — 비고 제외하고 남은 공간 ÷ 9 ≈ 5% */
         #overseasTable thead tr:nth-child(2) th,
-        #overseasTable tbody td:nth-child(n+3):nth-child(-n+11) { width: 5%; }
+        #overseasTable tbody td:nth-child(n+4):nth-child(-n+12) { width: 5%; }
 
-        /* 접대비 (ovs-cat-4 = td:nth-child(6)) 테두리 보정 */
-        #overseasTable tbody td:nth-child(6) {
+        /* 접대비 (ovs-cat-4 = td:nth-child(7)) 테두리 보정 */
+        #overseasTable tbody td:nth-child(7) {
             border-right: 1px solid #e2e8f0 !important;
             border-left: 1px solid #e2e8f0 !important;
         }
         /* 비고 줄바꿈 */
         #overseasTable .ovs-memo-input { white-space: pre; word-break: keep-all; overflow-wrap: normal; }
 
-        /* 개인경비 표: 비고 우선 할당(40%) + 나머지 12개 칼럼 균등 분배(60% / 12 = 5%) */
+        /* 개인경비 표: 비고 30% + 13 칼럼 × 5% = 95%, 액션 컬럼 5% */
         #settlementTable { table-layout: fixed; width: 100%; }
-        /* 비고 — 전체 40% 우선 배정 */
+        /* 비고 — 전체 30% 배정 */
         #settlementTable thead tr:first-child th:nth-last-child(2),
-        #settlementTable tbody td:nth-last-child(2) { width: 40%; }
-        /* 월, 일 + 식비~기타 9개 + 증빙 = 12개 칼럼 균등 (5%씩) */
+        #settlementTable tbody td:nth-last-child(2) { width: 30%; }
+        /* 액션 컬럼 (no-print) — 📎 + × 두 버튼 수용 */
+        #settlementTable thead tr:first-child th:nth-last-child(1),
+        #settlementTable tbody td:nth-last-child(1) { width: 5%; min-width: 50px; }
+        /* 연, 월, 일 + 식비~기타 9개 + 증빙 = 13개 칼럼 균등 (5%씩) */
         #settlementTable thead tr:first-child th:nth-child(1),
         #settlementTable thead tr:first-child th:nth-child(2),
+        #settlementTable thead tr:first-child th:nth-child(3),
         #settlementTable tbody td:nth-child(1),
         #settlementTable tbody td:nth-child(2),
+        #settlementTable tbody td:nth-child(3),
         #settlementTable thead tr:nth-child(2) th,
-        #settlementTable tbody td:nth-child(n+3):nth-child(-n+11),
+        #settlementTable tbody td:nth-child(n+4):nth-child(-n+12),
         #settlementTable thead tr:first-child th:nth-last-child(3),
         #settlementTable tbody td:nth-last-child(3) { width: 5%; }
         #settlementTable .memo-input {
@@ -726,6 +736,7 @@
                             <table class="w-full border-collapse table-auto" id="settlementTable">
                                 <thead>
                                     <tr class="border-b bg-gray-50">
+                                        <th class="p-1 border-r min-w-[40px] text-center whitespace-nowrap" rowspan="2">연</th>
                                         <th class="p-1 border-r min-w-[30px] text-center whitespace-nowrap" rowspan="2">월</th>
                                         <th class="p-1 border-r min-w-[30px] text-center whitespace-nowrap" rowspan="2">일</th>
                                         <th class="p-1 border-b text-center tracking-wide whitespace-nowrap" colspan="9">지출 항목 (금액: 원)</th>
@@ -748,7 +759,7 @@
                                 <tbody id="tableBody"></tbody>
                                 <tfoot>
                                     <tr class="bg-blue-50/50 expense-footer font-bold border-t-2 border-blue-200">
-                                        <td colspan="2" class="p-2 text-center border-r text-blue-900 text-[12px] whitespace-nowrap">항목별 합계</td>
+                                        <td colspan="3" class="p-2 text-center border-r text-blue-900 text-[12px] whitespace-nowrap">항목별 합계</td>
                                         <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight" id="total-01">0</td>
                                         <td class="p-1 px-2 border-r text-right text-blue-800 whitespace-nowrap tracking-tight" id="total-02">0</td>
                                         <td class="p-1 px-2 border-r text-right text-emerald-700 whitespace-nowrap tracking-tight" id="total-03">0</td>
@@ -843,6 +854,7 @@
                             <table class="w-full border-collapse table-auto" id="overseasTable">
                                 <thead>
                                     <tr class="bg-gray-50 border-b">
+                                        <th class="p-1 border-r w-10 text-center whitespace-nowrap" rowspan="2">연</th>
                                         <th class="p-1 border-r w-8 text-center whitespace-nowrap" rowspan="2">월</th>
                                         <th class="p-1 border-r w-8 text-center whitespace-nowrap" rowspan="2">일</th>
                                         <th class="p-1 border-b border-r text-center tracking-wide whitespace-nowrap" colspan="9">지출 항목 (외화 입력)</th>
@@ -868,7 +880,7 @@
                                 <tbody id="overseasTableBody"></tbody>
                                 <tfoot>
                                     <tr class="bg-indigo-50 font-bold border-t-2 border-indigo-200">
-                                        <td colspan="2" class="p-1 text-center border-r text-indigo-900 text-[11px] whitespace-nowrap">외화 합계</td>
+                                        <td colspan="3" class="p-1 text-center border-r text-indigo-900 text-[11px] whitespace-nowrap">외화 합계</td>
                                         <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-01">0</td>
                                         <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-02">0</td>
                                         <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-03">0</td>
@@ -1064,6 +1076,7 @@
                 data.rows = [];
                 tbody.querySelectorAll('tr').forEach(tr => {
                     const rowData = {
+                        year: tr.querySelector('.val-year')?.value || '',
                         month: tr.querySelector('.val-month').value,
                         day: tr.querySelector('.val-day').value,
                         costs: Array.from(tr.querySelectorAll('.cost-input')).map(inp => inp.value),
@@ -1079,6 +1092,7 @@
                 data.rows = [];
                 tbody.querySelectorAll('tr').forEach(tr => {
                     const rowData = {
+                        year: tr.querySelector('.val-year')?.value || '',
                         month: tr.querySelector('.val-month').value,
                         day: tr.querySelector('.val-day').value,
                         costs: Array.from(tr.querySelectorAll('.ovs-cost-input')).map(inp => inp.value),
@@ -1122,11 +1136,13 @@
                         }
                         const tr = document.createElement('tr');
                         tr.className = "border-b hover:bg-gray-50 transition";
+                        const yVal = row.year || defaultYearForRow();
+                        tr.setAttribute('data-year', yVal);
                         tr.setAttribute('data-month', row.month || 99);
                         tr.setAttribute('data-day', row.day || 99);
                         tr.setAttribute('data-headcount', hc);
                         tr.setAttribute('data-nights', nt);
-                        tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${row.month}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${row.day}" onchange="updateSortAttributes(this)"></td>${row.costs.map((v, idx) => {
+                        tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${yVal}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${row.month}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${row.day}" onchange="updateSortAttributes(this)"></td>${row.costs.map((v, idx) => {
                             const i = idx + 1;
                             const overMeal = i === 1 && isOverMealLimit(unformatComma(v), hc);
                             const overLodge = i === 5 && isOverLodgingLimit(unformatComma(v), hc, nt);
@@ -1134,7 +1150,7 @@
                             const capAttr = (i === 1) ? ' onblur="applyMealCapOnInput(this)"' : (i === 5 ? ' onblur="applyLodgingCapOnInput(this)"' : '');
                             const dblClick = (i === 6) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                             return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();"${capAttr}${dblClick} class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
-                        }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" value="${row.seq || ''}" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${row.memo}</div></td><td class="no-print text-center"><button onclick="deleteRow(this)" class="text-red-300 hover:text-red-500">×</button></td>`;
+                        }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" value="${row.seq || ''}" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${row.memo}</div></td><td class="no-print"><div class="flex items-center justify-center gap-1"><button onclick="deleteRow(this)" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
                         tbody.appendChild(tr);
                     });
                 } else {
@@ -1149,6 +1165,8 @@
                     data.rows.forEach(row => {
                         const tr = document.createElement('tr');
                         tr.className = "border-b hover:bg-gray-50 transition";
+                        const yVal = row.year || defaultYearForRow();
+                        tr.setAttribute('data-year', yVal);
                         tr.setAttribute('data-month', row.month || 99);
                         tr.setAttribute('data-day', row.day || 99);
                         let catInputs = '';
@@ -1158,6 +1176,7 @@
                             catInputs += `<td class="border-r"><input type="text" class="table-input ovs-cat-${i} ovs-cost-input text-right text-gray-700" value="${val}" oninput="formatComma(this, true); calcOvsRow(this);" onblur="formatAmount2Decimals(this); calcOvsRow(this);"${dblClick} placeholder=""></td>`;
                         });
                         tr.innerHTML = `
+                            <td class="border-r"><input type="number" class="table-input val-year" value="${yVal}" onchange="updateOvsSortAttributes(this)"></td>
                             <td class="border-r"><input type="number" class="table-input val-month" value="${row.month}" onchange="updateOvsSortAttributes(this)"></td>
                             <td class="border-r"><input type="number" class="table-input val-day" value="${row.day}" onchange="updateOvsSortAttributes(this)"></td>
                             ${catInputs}
@@ -1171,7 +1190,7 @@
                             <td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td>
                             <td class="border-r"><input type="text" class="table-input ovs-seq" value="${row.seq || ''}" placeholder="번호"></td>
                             <td class="relative"><div contenteditable="true" class="editable-cell ovs-memo-input pr-10" placeholder="적요">${row.memo}</div></td>
-                            <td class="no-print text-center"><button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-300 hover:text-red-500">×</button></td>
+                            <td class="no-print"><div class="flex items-center justify-center gap-1"><button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>
                         `;
                         tbody.appendChild(tr);
                         calcOvsRow(tr.querySelector('.ovs-rate'));
@@ -2476,11 +2495,12 @@
                 const cap = capLodgingAmount(amtVal, pre?.headcount, pre?.nights);
                 if (cap.wasCapped) { amtVal = cap.capped; finalMemo = `[한도적용 원금 ${cap.original.toLocaleString()}] ` + finalMemo; }
             }
+            const y = pre?.year || defaultYearForRow();
             const m = pre?.month || "", d = pre?.day || "", memo = finalMemo, formattedAmt = amtVal ? amtVal.toLocaleString() : "";
-            tr.setAttribute('data-month', m || 99); tr.setAttribute('data-day', d || 99);
+            tr.setAttribute('data-year', y); tr.setAttribute('data-month', m || 99); tr.setAttribute('data-day', d || 99);
             tr.setAttribute('data-headcount', pre?.headcount || 1);
             tr.setAttribute('data-nights', pre?.nights || 1);
-            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateSortAttributes(this)"></td>${[1,2,3,4,5,6,7,8,9].map(i => {
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${y}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateSortAttributes(this)"></td>${[1,2,3,4,5,6,7,8,9].map(i => {
                 const v = (pre && pre.col === i) ? formattedAmt : "";
                 const overMeal = i === 1 && isOverMealLimit(unformatComma(v), pre?.headcount);
                 const overLodge = i === 5 && isOverLodgingLimit(unformatComma(v), pre?.headcount, pre?.nights);
@@ -2488,7 +2508,7 @@
                 const capAttr = (i === 1) ? ' onblur="applyMealCapOnInput(this)"' : (i === 5 ? ' onblur="applyLodgingCapOnInput(this)"' : '');
                 const dblClick = (i === 6) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                 return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();"${capAttr}${dblClick} class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
-            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print text-center"><button onclick="deleteRow(this)" class="text-red-300 hover:text-red-500">×</button></td>`;
+            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print"><div class="flex items-center justify-center gap-1"><button onclick="deleteRow(this)" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
             tbody.appendChild(tr); reIndexRows(); updateTotals();
         }
 
@@ -2572,7 +2592,7 @@
                 alert(`네트워크 오류: ${e.message}. 수기 입력해 주세요.`);
             }
         }
-        function updateSortAttributes(input) { const tr = input.closest('tr'); tr.setAttribute('data-month', tr.querySelector('.val-month').value || 99); tr.setAttribute('data-day', tr.querySelector('.val-day').value || 99); sortAndReindex(); if (typeof checkTripMealConflicts === 'function') checkTripMealConflicts(); }
+        function updateSortAttributes(input) { const tr = input.closest('tr'); tr.setAttribute('data-year', tr.querySelector('.val-year')?.value || defaultYearForRow()); tr.setAttribute('data-month', tr.querySelector('.val-month').value || 99); tr.setAttribute('data-day', tr.querySelector('.val-day').value || 99); sortAndReindex(); if (typeof checkTripMealConflicts === 'function') checkTripMealConflicts(); }
         function reIndexRows() { let seq = 1; document.querySelectorAll('#tableBody tr').forEach(row => { const seqInput = row.querySelector('.val-seq'); const m = row.querySelector('.val-month')?.value; const d = row.querySelector('.val-day')?.value; if (seqInput && (m || d)) seqInput.value = seq++; else if (seqInput) seqInput.value = ""; }); }
         function deleteRow(btn) { const tr = btn.closest('tr'); const key = tr.getAttribute('data-receipt-key'); if (key) existingReceipts.delete(key); tr.remove(); updateTotals(); reIndexRows(); }
 
@@ -2581,6 +2601,8 @@
             const tbody = document.getElementById('tableBody');
             const tr = document.createElement('tr');
             tr.className = "border-b hover:bg-gray-50 transition";
+            const y = res.year || defaultYearForRow();
+            tr.setAttribute('data-year', y);
             tr.setAttribute('data-month', res.month || 99);
             tr.setAttribute('data-day', res.day || 99);
             tr.setAttribute('data-headcount', peopleCount || 1);
@@ -2604,7 +2626,7 @@
                 if (cap.wasCapped) { amt = cap.capped; memo = `[한도적용 원금 ${cap.original.toLocaleString()}] ` + memo; }
             }
             const formattedAmt = amt ? amt.toLocaleString() : '';
-            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateSortAttributes(this)"></td>${[1,2,3,4,5,6,7,8,9].map(i => {
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${y}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateSortAttributes(this)"></td>${[1,2,3,4,5,6,7,8,9].map(i => {
                 const v = (i === col) ? formattedAmt : '';
                 const overMeal = i === 1 && isOverMealLimit(unformatComma(v), peopleCount);
                 const overLodge = i === 5 && isOverLodgingLimit(unformatComma(v), peopleCount, nt);
@@ -2612,7 +2634,7 @@
                 const capAttr = (i === 1) ? ' onblur="applyMealCapOnInput(this)"' : (i === 5 ? ' onblur="applyLodgingCapOnInput(this)"' : '');
                 const dblClick = (i === 6) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                 return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();"${capAttr}${dblClick} class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
-            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print text-center whitespace-nowrap"><button onclick="previewReceipt(this)" class="text-blue-400 hover:text-blue-600 mr-1" title="영수증 보기">📎</button><button onclick="deleteRow(this)" class="text-red-300 hover:text-red-500">×</button></td>`;
+            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print"><div class="flex items-center justify-center gap-1"><button onclick="previewReceipt(this)" class="text-blue-500 hover:text-blue-700 shrink-0" title="영수증 보기"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></button><button onclick="deleteRow(this)" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
             tbody.appendChild(tr);
             updateTotals();
         }
@@ -2623,10 +2645,21 @@
             return;
         }
 
+        // 신규 행의 기본 연도 — 작성일자가 있으면 그 연도, 없으면 현재 연도
+        function defaultYearForRow() {
+            const wd = document.getElementById('writeDate')?.value || '';
+            if (/^\d{4}-/.test(wd)) return wd.slice(0, 4);
+            return String(new Date().getFullYear());
+        }
+
         function sortAndReindex() {
             const tbody = document.getElementById('tableBody');
             const rows = Array.from(tbody.querySelectorAll('tr'));
+            const fallbackYear = parseInt(defaultYearForRow()) || 9999;
             rows.sort((a, b) => {
+                const ay = parseInt(a.getAttribute('data-year')) || fallbackYear;
+                const by = parseInt(b.getAttribute('data-year')) || fallbackYear;
+                if (ay !== by) return ay - by;
                 const am = parseInt(a.getAttribute('data-month')) || 99;
                 const bm = parseInt(b.getAttribute('data-month')) || 99;
                 if (am !== bm) return am - bm;
@@ -2641,7 +2674,11 @@
         function sortAndReindexOverseas() {
             const tbody = document.getElementById('overseasTableBody');
             const rows = Array.from(tbody.querySelectorAll('tr'));
+            const fallbackYear = parseInt(defaultYearForRow()) || 9999;
             rows.sort((a, b) => {
+                const ay = parseInt(a.getAttribute('data-year')) || fallbackYear;
+                const by = parseInt(b.getAttribute('data-year')) || fallbackYear;
+                if (ay !== by) return ay - by;
                 const am = parseInt(a.getAttribute('data-month')) || 99;
                 const bm = parseInt(b.getAttribute('data-month')) || 99;
                 if (am !== bm) return am - bm;
@@ -2661,8 +2698,9 @@
         // --- OVERSEAS UI Functions ---
         function addOverseasRow(pre = null) {
             const tbody = document.getElementById('overseasTableBody'); const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50 transition";
+            const y = pre?.year || defaultYearForRow();
             const m = pre?.month || "", d = pre?.day || "", memo = pre?.memo || "", amt = pre?.amount || "", curr = pre?.currency || "";
-            tr.setAttribute('data-month', m || 99); tr.setAttribute('data-day', d || 99);
+            tr.setAttribute('data-year', y); tr.setAttribute('data-month', m || 99); tr.setAttribute('data-day', d || 99);
             tr.setAttribute('data-headcount', pre?.headcount || 1);
             tr.setAttribute('data-nights', pre?.nights || 1);
             if (pre?.sourceFile) tr.setAttribute('data-receipt-file', pre.sourceFile);
@@ -2678,7 +2716,7 @@
                 const dblClick = (i === 4) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                 catInputs += `<td class="border-r"><input type="text" class="table-input ovs-cat-${i} ovs-cost-input text-right text-gray-700" value="${val}" oninput="formatComma(this, true); calcOvsRow(this);" onblur="formatAmount2Decimals(this); calcOvsRow(this);"${dblClick} placeholder=""></td>`;
             }
-            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateOvsSortAttributes(this)"></td>${catInputs}<td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${curr}" placeholder="USD" onchange="autoFetchRate(this, false)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" oninput="formatComma(this, true); calcOvsRow(this);" placeholder=""><button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td><td class="border-r"><input type="text" class="table-input ovs-seq" placeholder="번호"></td><td class="relative"><div contenteditable="true" class="editable-cell ovs-memo-input pr-10" placeholder="적요">${memo || ''}</div>${pre ? `<button onclick="this.closest('tr').classList.remove('row-ai-pending'); this.remove();" class="no-print absolute right-1 top-1/2 -translate-y-1/2 bg-amber-500 text-white text-[9px] px-1 py-0.5 rounded shadow">확인</button>` : ''}</td><td class="no-print text-center whitespace-nowrap">${pre?.sourceFile ? `<button onclick="previewReceipt(this)" class="text-blue-400 hover:text-blue-600 mr-1" title="영수증 보기">📎</button>` : ''}<button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-300 hover:text-red-500">×</button></td>`;
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${y}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateOvsSortAttributes(this)"></td>${catInputs}<td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${curr}" placeholder="USD" onchange="autoFetchRate(this, false)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" oninput="formatComma(this, true); calcOvsRow(this);" placeholder=""><button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td><td class="border-r"><input type="text" class="table-input ovs-seq" placeholder="번호"></td><td class="relative"><div contenteditable="true" class="editable-cell ovs-memo-input pr-10" placeholder="적요">${memo || ''}</div>${pre ? `<button onclick="this.closest('tr').classList.remove('row-ai-pending'); this.remove();" class="no-print absolute right-1 top-1/2 -translate-y-1/2 bg-amber-500 text-white text-[9px] px-1 py-0.5 rounded shadow">확인</button>` : ''}</td><td class="no-print"><div class="flex items-center justify-center gap-1">${pre?.sourceFile ? `<button onclick="previewReceipt(this)" class="text-blue-500 hover:text-blue-700 shrink-0" title="영수증 보기"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></button>` : ''}<button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
             if (pre) tr.classList.add('row-ai-pending');
             tbody.appendChild(tr); reIndexOverseasRows(); if (pre && curr) autoFetchRate(tr.querySelector('.ovs-rate').nextElementSibling, false, true); 
         }
@@ -2800,7 +2838,7 @@
             tbody.appendChild(tr);
         }
         function calcOvsTripRow(inp) { const tr = inp.closest('tr'); const days = parseFloat(tr.querySelector('.ovs-trip-days').value) || 0; const price = unformatComma(tr.querySelector('.ovs-trip-price').value); const rate = unformatComma(tr.querySelector('.ovs-trip-rate').value); const krw = Math.round(days * price * rate); tr.querySelector('.ovs-trip-krw').value = krw > 0 ? krw.toLocaleString() : ''; let tripTotal = 0; document.querySelectorAll('.ovs-trip-krw').forEach(el => tripTotal += unformatComma(el.value)); document.getElementById('overseasTripFooterTotal').innerText = tripTotal.toLocaleString(); updateOverseasTotals(); }
-        function updateOvsSortAttributes(input) { const tr = input.closest('tr'); tr.setAttribute('data-month', tr.querySelector('.val-month').value || 99); tr.setAttribute('data-day', tr.querySelector('.val-day').value || 99); sortAndReindexOverseas(); }
+        function updateOvsSortAttributes(input) { const tr = input.closest('tr'); tr.setAttribute('data-year', tr.querySelector('.val-year')?.value || defaultYearForRow()); tr.setAttribute('data-month', tr.querySelector('.val-month').value || 99); tr.setAttribute('data-day', tr.querySelector('.val-day').value || 99); sortAndReindexOverseas(); }
         function reIndexOverseasRows() { let seq = 1; document.querySelectorAll('#overseasTableBody tr').forEach(row => { const seqInput = row.querySelector('.ovs-seq'); const m = row.querySelector('.val-month')?.value; const d = row.querySelector('.val-day')?.value; if (seqInput && (m || d)) seqInput.value = seq++; else if (seqInput) seqInput.value = ""; }); }
     </script>
 </body>
