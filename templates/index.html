@@ -1915,9 +1915,22 @@
                 violations.push({ s:'error', m:`합계 불일치: 화면 표시 ${displayedTotal.toLocaleString()} vs 계산 ${manualSum.toLocaleString()}` });
             }
 
-            // 4. 해외 개인경비 검증 (해외 탭 활성화 시)
-            if (activeTab === 'overseas') {
-                document.querySelectorAll('#overseasTableBody tr').forEach((tr, idx) => {
+            // 4. 해외 개인경비 검증 (활성 탭 무관 — 해외 표에 데이터가 있으면 항상 검사)
+            const overseasRowsArr = Array.from(document.querySelectorAll('#overseasTableBody tr'));
+            const hasOverseasCost = overseasRowsArr.some(row =>
+                Array.from(row.querySelectorAll('.ovs-cost-input')).some(i => unformatComma(i.value) > 0)
+            );
+            if (hasOverseasCost) {
+                // 4-A. 출장기간 + 평균환율 일괄 연동 적용 검사 (인쇄 차단 조건과 동일)
+                const tripStart = document.getElementById('tripStartDate')?.value || '';
+                const tripEnd = document.getElementById('tripEndDate')?.value || '';
+                if (!tripStart || !tripEnd) {
+                    violations.push({ s:'error', m:`해외 출장 기간(시작일·종료일) 미입력 — [평균 환율 일괄 연동] 사용 불가` });
+                } else if (!_avgRateState || _avgRateState.startDate !== tripStart || _avgRateState.endDate !== tripEnd) {
+                    violations.push({ s:'error', m:`해외 [평균 환율 일괄 연동] 미적용 — 출장 기간(${tripStart} ~ ${tripEnd})으로 일괄 연동 버튼을 클릭해 주세요` });
+                }
+                // 4-B. 행별 검증 (월/일/통화/환율/평균일치/수기영수증/접대비 상세)
+                overseasRowsArr.forEach((tr, idx) => {
                     const costs = Array.from(tr.querySelectorAll('.ovs-cost-input')).map(i => unformatComma(i.value));
                     const anyAmt = costs.some(c => c > 0);
                     if (!anyAmt) return;
@@ -1927,7 +1940,16 @@
                     const rate = unformatComma(tr.querySelector('.ovs-rate')?.value || '0');
                     if (!month || !day) violations.push({ s:'warning', m:`해외 ${idx+1}번 행: 월/일이 비어 있습니다.` });
                     if (!curr) violations.push({ s:'error', m:`해외 ${idx+1}번 행: 통화 미입력` });
-                    if (rate <= 0) violations.push({ s:'error', m:`해외 ${idx+1}번 행(${curr}): 환율 미입력 — 서울외국환중개 매매기준율 조회 필요` });
+                    if (rate <= 0 && curr && curr !== 'KRW' && curr !== '원' && curr !== '원화') {
+                        violations.push({ s:'error', m:`해외 ${idx+1}번 행(${month}/${day}, ${curr}): 환율 미입력 — [평균 환율 일괄 연동] 필요` });
+                    } else if (curr && curr !== 'KRW' && curr !== '원' && curr !== '원화' && _avgRateState) {
+                        // 평균환율 적용 상태에서 행의 환율이 평균과 다르면 경고
+                        const expected = _avgRateState.rates[curr];
+                        const expectedNum = expected ? parseFloat(String(expected).replace(/,/g, '')) : 0;
+                        if (expectedNum > 0 && Math.abs(rate - expectedNum) > 0.001) {
+                            violations.push({ s:'error', m:`해외 ${idx+1}번 행(${month}/${day}, ${curr}): 환율 ${rate}이 평균환율(${expected})과 불일치 — [평균 환율 일괄 연동] 재실행 필요` });
+                        }
+                    }
                     // 수기 입력 행 영수증 첨부 필수
                     if (tr.getAttribute('data-source') === 'manual' && !tr.getAttribute('data-receipt-file')) {
                         violations.push({ s:'error', m:`해외 ${idx+1}번 행(${month}/${day}): 수기 입력 — 영수증 첨부 필요 (회색 📎+ 버튼)` });
