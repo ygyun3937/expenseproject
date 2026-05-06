@@ -2144,7 +2144,6 @@
             if (currentEditingRegion && perDiemRates[currentEditingRegion]) {
                 _readModalInputsToRegion(currentEditingRegion);
             }
-            saveCurrentTabToMemory();
             localStorage.setItem('MAK_PerDiemRates_v3', JSON.stringify(perDiemRates));
             // 행의 region select 옵션 + 단가 동기화
             refreshRegionSelects();
