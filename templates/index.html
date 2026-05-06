@@ -1568,11 +1568,18 @@
             const ovsTripTotal = unformatComma(document.getElementById('overseasTripFooterTotal')?.innerText || '0');
             if (ovsTripTotal === 0) document.getElementById('overseasTripSection')?.classList.add('skip-print');
 
-            // 증빙 PDF 페이지 첨부 — 정산서 마지막 다음에 영수증 페이지 인쇄
-            let receiptContainer = null;
+            // 증빙 PDF 페이지 첨부 — 각 탭 정산서 다음에 해당 탭 영수증 인쇄
+            // 인쇄 순서: 국내 정산서 → 국내 영수증 → 해외 정산서 → 해외 영수증
+            const appendedReceiptContainers = [];
             try {
-                receiptContainer = await buildReceiptPrintSection();
-                if (receiptContainer) document.body.appendChild(receiptContainer);
+                if (domesticTotal !== 0) {
+                    const c = await buildReceiptPrintSection('domestic');
+                    if (c && domView) { domView.appendChild(c); appendedReceiptContainers.push(c); }
+                }
+                if (overseasTotal !== 0) {
+                    const c = await buildReceiptPrintSection('overseas');
+                    if (c && ovsView) { ovsView.appendChild(c); appendedReceiptContainers.push(c); }
+                }
             } catch (e) {
                 console.warn('영수증 인쇄 첨부 실패 — 정산서만 인쇄', e);
             }
@@ -1583,9 +1590,7 @@
                 portraitWrapper?.classList.remove('skip-print');
                 document.getElementById('tripSection')?.classList.remove('skip-print');
                 document.getElementById('overseasTripSection')?.classList.remove('skip-print');
-                if (receiptContainer && receiptContainer.parentNode) {
-                    receiptContainer.parentNode.removeChild(receiptContainer);
-                }
+                appendedReceiptContainers.forEach(c => { if (c.parentNode) c.parentNode.removeChild(c); });
                 window.removeEventListener('afterprint', cleanup);
             };
             window.addEventListener('afterprint', cleanup);
@@ -1737,16 +1742,17 @@
         }
 
         // 인쇄 시 증빙 PDF 각 페이지를 이미지로 렌더해 print-only 컨테이너 반환
-        async function buildReceiptPrintSection() {
-            const result = await buildMergedReceiptsBlob();
+        // tab 인자로 'domestic' / 'overseas' 지정 (생략 시 활성 탭)
+        async function buildReceiptPrintSection(tab) {
+            const result = await buildMergedReceiptsBlob(tab);
             if (!result || result.error || !result.blob) return null;
             try { await ensurePdfJs(); } catch (e) { console.warn('PDF.js 로드 실패 — 영수증 인쇄 첨부 스킵', e); return null; }
             try {
                 const buf = await result.blob.arrayBuffer();
                 const doc = await pdfjsLib.getDocument({ data: buf }).promise;
                 const container = document.createElement('div');
-                container.id = 'receiptPrintAppend';
                 container.className = 'print-only-receipts';
+                container.dataset.receiptTab = tab || activeTab;
                 for (let i = 1; i <= doc.numPages; i++) {
                     const page = await doc.getPage(i);
                     const viewport = page.getViewport({ scale: 1.6 });
@@ -1767,12 +1773,13 @@
             }
         }
 
-        // ===== 증빙 영수증 PDF — 빌더 (현재 활성 탭 기준 병합) =====
+        // ===== 증빙 영수증 PDF — 빌더 (탭별 병합) =====
         // 반환: { blob, filename } | { error: string }
-        async function buildMergedReceiptsBlob() {
+        async function buildMergedReceiptsBlob(tab) {
+            tab = tab || activeTab;
             const allFiles = (window.uploadedReceiptFiles || []);
-            const tabLabel = activeTab === 'overseas' ? '해외' : '국내';
-            const tbodyId = activeTab === 'overseas' ? 'overseasTableBody' : 'tableBody';
+            const tabLabel = tab === 'overseas' ? '해외' : '국내';
+            const tbodyId = tab === 'overseas' ? 'overseasTableBody' : 'tableBody';
             if (allFiles.length === 0) {
                 return { error: `업로드된 영수증이 없습니다. ${tabLabel} 탭에서 먼저 영수증을 업로드해 주세요.` };
             }
