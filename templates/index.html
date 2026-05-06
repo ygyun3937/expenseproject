@@ -576,7 +576,7 @@
         <div class="flex space-x-1 border-b border-gray-300 mb-6 no-print justify-between items-end">
             <div class="flex space-x-1">
                 <button id="tabDomesticBtn" onclick="switchTab('domestic')" class="px-8 py-3.5 font-bold text-sm bg-white border-t-4 border-l border-r border-blue-600 text-blue-800 rounded-t-lg shadow-sm z-10 -mb-[1px] flex items-center transition-all"><span class="text-lg mr-2">🇰🇷</span> 국내 개인경비</button>
-                <button id="tabOverseasBtn" onclick="switchTab('overseas')" class="px-8 py-3.5 font-bold text-sm bg-gray-100 border-t-4 border-transparent border-l border-r border-gray-200 text-gray-500 hover:bg-gray-50 rounded-t-lg transition-all flex items-center"><span class="text-lg mr-2">✈️</span> 해외 개인경비 <span class="ml-2 text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-300 px-1.5 py-0.5 rounded">🔧 베타</span></button>
+                <button id="tabOverseasBtn" onclick="switchTab('overseas')" class="px-8 py-3.5 font-bold text-sm bg-gray-100 border-t-4 border-transparent border-l border-r border-gray-200 text-gray-500 hover:bg-gray-50 rounded-t-lg transition-all flex items-center"><span class="text-lg mr-2">✈️</span> 해외 개인경비</button>
             </div>
             
             <div class="flex space-x-2 pb-2">
@@ -799,7 +799,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-stretch landscape-header print-grid-2">
                     <div class="header-info-box shadow-sm border-t-4 border-t-indigo-600 !m-0 flex flex-col justify-center">
                         <div class="flex-1 space-y-3 w-full">
-                            <div class="border-b-2 border-indigo-600 pb-1 inline-block mb-1"><h2 class="text-xl font-black text-indigo-700 tracking-tight">[해외 개인경비] Overseas Expense Report</h2></div>
+                            <div class="border-b-2 border-indigo-600 pb-1 inline-block mb-1"><h2 class="text-xl font-black text-indigo-700 tracking-tight">[해외 개인경비] Expense Management Report</h2></div>
                             <table class="w-full text-sm header-table border-collapse">
                                 <tr>
                                     <th class="border border-slate-200 px-3 py-1.5 standard-label text-left w-24 whitespace-nowrap font-bold">성명</th>
@@ -822,8 +822,8 @@
                     <div class="bg-indigo-900 rounded-xl py-4 px-6 text-white shadow-sm flex flex-col justify-center border-t-4 border-indigo-900">
                         <div class="flex justify-between items-center w-full">
                             <div class="flex flex-col">
-                                <h4 class="text-indigo-200 text-lg md:text-xl font-black uppercase tracking-tight leading-tight">해외경비 원화 환산 총계 <span class="text-xs md:text-sm font-bold opacity-80">(TOTAL KRW)</span></h4>
-                                <p class="text-[10px] md:text-[11px] opacity-70 font-bold mt-0.5">(적용 환율에 따른 원화 청구 금액)</p>
+                                <h4 class="text-indigo-200 text-lg md:text-xl font-black uppercase tracking-tight leading-tight">해외 합계 금액 <span class="text-xs md:text-sm font-bold opacity-80">(TOTAL KRW)</span></h4>
+                                <p class="text-[10px] md:text-[11px] opacity-70 font-bold mt-0.5">(해외경비 합계 + 출장일비 합계)</p>
                             </div>
                             <div class="text-right whitespace-nowrap">
                                 <span class="text-2xl md:text-3xl font-black italic tracking-tighter">₩ <span id="overseasGrandTotal">0</span></span>
@@ -884,19 +884,19 @@
                                 </thead>
                                 <tbody id="overseasTableBody"></tbody>
                                 <tfoot>
-                                    <tr class="bg-indigo-50 font-bold border-t-2 border-indigo-200">
-                                        <td colspan="3" class="p-1 text-center border-r text-indigo-900 text-[11px] whitespace-nowrap">외화 합계</td>
-                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-01">0</td>
-                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-02">0</td>
-                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-03">0</td>
-                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-04">0</td>
-                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-05">0</td>
-                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-06">0</td>
-                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-07">0</td>
-                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-08">0</td>
-                                        <td class="p-1 border-r text-right whitespace-nowrap text-gray-700" id="ovs-total-09">0</td>
-                                        <td colspan="2" class="p-1 px-2 text-right text-indigo-900 text-[12px] whitespace-nowrap border-r">원화 환산 합계 :</td>
-                                        <td colspan="4" class="p-1 px-3 text-left text-indigo-900 font-black italic text-[14px] whitespace-nowrap">₩ <span id="overseasFooterTotal">0</span></td>
+                                    <tr class="bg-indigo-50/50 expense-footer font-bold border-t-2 border-indigo-200">
+                                        <td colspan="3" class="p-2 text-center border-r text-indigo-900 text-[12px] whitespace-nowrap">외화 합계</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight text-gray-700" id="ovs-total-01">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight text-gray-700" id="ovs-total-02">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight text-gray-700" id="ovs-total-03">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight text-gray-700" id="ovs-total-04">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight text-gray-700" id="ovs-total-05">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight text-gray-700" id="ovs-total-06">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight text-gray-700" id="ovs-total-07">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight text-gray-700" id="ovs-total-08">0</td>
+                                        <td class="p-1 px-2 border-r text-right whitespace-nowrap tracking-tight text-gray-700" id="ovs-total-09">0</td>
+                                        <td colspan="2" class="border-r border-l"></td>
+                                        <td colspan="4" class="py-2 px-4 text-right align-middle"><div class="standard-label font-bold text-[13px] leading-tight">해외경비 합계</div><div class="text-xl text-indigo-800 font-black italic leading-tight whitespace-nowrap">₩ <span id="overseasFooterTotal">0</span></div></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -916,16 +916,16 @@
                             <table class="w-full border-collapse table-auto text-[11.5px]" id="overseasTripAllowanceTable">
                                 <thead>
                                     <tr class="bg-teal-50/50 border-b border-teal-100 text-[#19736E]">
-                                        <th class="p-1 border-r text-center w-10 font-bold">번호</th>
-                                        <th class="p-1 border-r text-center w-40 font-bold">총출장기간</th>
-                                        <th class="p-1 border-r text-center w-40 font-bold">일비신청기간</th>
-                                        <th class="p-1 border-r text-center font-bold">국가/도시</th>
-                                        <th class="p-1 border-r text-center w-16 font-bold">지역</th>
-                                        <th class="p-1 border-r text-center w-20 font-bold">직급</th>
-                                        <th class="p-1 border-r text-center w-24 font-bold">일비</th>
-                                        <th class="p-1 border-r text-center w-12 font-bold">일수</th>
-                                        <th class="p-1 border-r text-center w-28 font-bold">금액</th>
-                                        <th class="p-1 text-center w-32 font-bold">비고</th>
+                                        <th class="p-1 border-r text-center w-10 font-bold whitespace-nowrap">번호</th>
+                                        <th class="p-1 border-r text-center w-36 font-bold whitespace-nowrap">총출장기간</th>
+                                        <th class="p-1 border-r text-center w-36 font-bold whitespace-nowrap">일비신청기간</th>
+                                        <th class="p-1 border-r text-center font-bold whitespace-nowrap">국가/도시</th>
+                                        <th class="p-1 border-r text-center w-14 font-bold whitespace-nowrap">지역</th>
+                                        <th class="p-1 border-r text-center w-16 font-bold whitespace-nowrap">직급</th>
+                                        <th class="p-1 border-r text-center w-24 font-bold whitespace-nowrap">일비</th>
+                                        <th class="p-1 border-r text-center w-14 font-bold whitespace-nowrap">일수</th>
+                                        <th class="p-1 border-r text-center w-24 font-bold whitespace-nowrap">금액</th>
+                                        <th class="p-1 text-center font-bold whitespace-nowrap">비고</th>
                                         <th class="p-1 w-6 no-print"></th>
                                     </tr>
                                 </thead>
@@ -934,7 +934,7 @@
                                     <tr class="trip-footer font-bold border-t border-teal-100" style="background-color: rgba(204, 251, 241, 0.5);">
                                         <td colspan="8" style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 border-r text-right text-[#19736E] text-[12.3px] whitespace-nowrap">해외 출장일비 합계 :</td>
                                         <td style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 border-r text-right text-[#19736E] min-w-[80px] pr-2 font-bold text-[14px] whitespace-nowrap">₩ <span id="overseasTripFooterTotal">0</span></td>
-                                        <td colspan="2" style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 text-left text-red-600 text-[12.3px] font-normal pl-4 leading-relaxed border-r">※ 출장 품의서 증빙</td>
+                                        <td colspan="2" style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 text-left text-red-600 text-[12.3px] font-normal pl-4 leading-relaxed border-r">※ 증빙 : 항공권</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -3006,7 +3006,7 @@
 
         function addOverseasTripRow() {
             const tbody = document.getElementById('overseasTripBody'); const tr = document.createElement('tr'); tr.className = "border-b border-teal-100 hover:bg-teal-50/30 transition";
-            tr.innerHTML = `<td class="p-1 border-r border-teal-100 text-center text-slate-400 text-[12px] bg-white font-bold ovs-trip-seq">1</td><td class="p-1 border-r border-teal-100 text-center bg-white"><div class="flex items-center justify-center gap-1"><input type="date" class="ovs-trip-total-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="syncTripClaimBounds(this)"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-total-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="syncTripClaimBounds(this)"></div></td><td class="p-1 border-r border-teal-100 text-center bg-white"><div class="flex items-center justify-center gap-1"><input type="date" class="ovs-trip-claim-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-claim-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"></div></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-center" placeholder="국가/도시"></div></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-region text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option>${Object.entries(perDiemRates).map(([k, v]) => `<option value="${k}">${v.name || k}</option>`).join('')}</select></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-rank text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option><option value="exec">임원</option><option value="gm">부장</option><option value="dgm">차장</option><option value="manager">과장</option><option value="am">대리</option><option value="sv">주임</option><option value="staff">사원</option></select></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-price text-right text-[#19736E] font-bold" placeholder="" oninput="formatComma(this, true); calcOvsTripRow(this);"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="number" class="table-input ovs-trip-days text-center" placeholder="" oninput="calcOvsTripRow(this)"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-krw text-right font-bold text-[#19736E]" readonly value="" placeholder=""></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-left" placeholder="비고"></div></td><td class="p-1 border-teal-100 no-print bg-white"><div class="flex items-center justify-center gap-1"><button onclick="this.closest('tr').remove(); reIndexOverseasTripRows(); recalcOverseasTripTotal(); updateOverseasTotals();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
+            tr.innerHTML = `<td class="p-1 border-r border-teal-100 text-center text-slate-400 text-[12px] bg-white font-bold ovs-trip-seq whitespace-nowrap">1</td><td class="p-1 border-r border-teal-100 text-center bg-white whitespace-nowrap"><div class="flex items-center justify-center gap-1 flex-nowrap"><input type="date" class="ovs-trip-total-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="syncTripClaimBounds(this)"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-total-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="syncTripClaimBounds(this)"></div></td><td class="p-1 border-r border-teal-100 text-center bg-white whitespace-nowrap"><div class="flex items-center justify-center gap-1 flex-nowrap"><input type="date" class="ovs-trip-claim-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-claim-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"></div></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-center whitespace-nowrap overflow-x-auto" placeholder="국가/도시"></div></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-region text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option>${Object.entries(perDiemRates).map(([k, v]) => `<option value="${k}">${v.name || k}</option>`).join('')}</select></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-rank text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option><option value="exec">임원</option><option value="gm">부장</option><option value="dgm">차장</option><option value="manager">과장</option><option value="am">대리</option><option value="sv">주임</option><option value="staff">사원</option></select></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-price text-right text-[#19736E] font-bold whitespace-nowrap" placeholder="" oninput="formatComma(this, true); calcOvsTripRow(this);"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="number" class="table-input ovs-trip-days text-center whitespace-nowrap" placeholder="" oninput="calcOvsTripRow(this)"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-krw text-right font-bold text-[#19736E] whitespace-nowrap" readonly value="" placeholder=""></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-left whitespace-nowrap overflow-x-auto" placeholder="비고"></div></td><td class="p-1 border-teal-100 no-print bg-white"><div class="flex items-center justify-center gap-1"><button onclick="this.closest('tr').remove(); reIndexOverseasTripRows(); recalcOverseasTripTotal(); updateOverseasTotals();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
             tbody.appendChild(tr);
             reIndexOverseasTripRows();
         }
