@@ -319,8 +319,19 @@
             pointer-events: none; user-select: none;
         }
         @media print {
-            .memo-input::before, .ovs-memo-input::before { display: none !important; }
-            .memo-input, .ovs-memo-input { padding-left: 2px !important; }
+            /* AI 행 배지: 인쇄 시 숨김 + 패딩 복원 */
+            tr[data-source="ai"] .memo-input::before,
+            tr[data-source="ai"] .ovs-memo-input::before { display: none !important; }
+            tr[data-source="ai"] .memo-input,
+            tr[data-source="ai"] .ovs-memo-input { padding-left: 2px !important; }
+            /* 수기 행 배지: 인쇄에도 유지 (감사 표시 — 어두운 회색으로 인쇄 가독성↑) */
+            tr[data-source="manual"] .memo-input::before,
+            tr[data-source="manual"] .ovs-memo-input::before {
+                background: #4b5563 !important;
+                color: white !important;
+                font-size: 8px !important;
+                padding: 0px 3px !important;
+            }
         }
         @media print {
             /* 인쇄 시 출장기간 텍스트는 헤더(h2) 다음 줄에 작은 글씨로 노출 */
