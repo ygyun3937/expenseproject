@@ -353,6 +353,10 @@
                 </div>
             </div>
 
+            <div class="bg-amber-50 border border-amber-200 rounded p-2 mb-3">
+                <label class="text-[11px] font-bold text-amber-800 block mb-1">🔒 관리자 비밀번호 <span class="font-normal text-gray-500">(저장 시 필요)</span></label>
+                <input type="password" id="pd-password" class="w-full border border-amber-300 rounded p-1.5 text-sm bg-white outline-none focus:border-amber-500" placeholder="비밀번호">
+            </div>
             <div class="flex gap-2">
                 <button onclick="closePerDiemSettings()" class="flex-1 bg-gray-100 text-gray-600 px-4 py-2.5 rounded-lg hover:bg-gray-200 transition font-bold text-sm">취소</button>
                 <button onclick="savePerDiemSettings()" class="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition font-bold text-sm shadow-sm">저장하기</button>
@@ -2180,6 +2184,7 @@
             currentEditingRegion = firstKey;
             _populateRegionSelect(firstKey);
             loadPerDiemSettingsUI();
+            document.getElementById('pd-password').value = '';
             document.getElementById('perDiemSettingsModal').classList.remove('hidden-el');
         }
 
@@ -2190,10 +2195,28 @@
                 _perDiemSnapshot = null;
             }
             isPerDiemEditMode = false;
+            document.getElementById('pd-password').value = '';
             document.getElementById('perDiemSettingsModal').classList.add('hidden-el');
         }
 
-        function savePerDiemSettings() {
+        async function savePerDiemSettings() {
+            const password = document.getElementById('pd-password').value;
+            if (!password) { alert('관리자 비밀번호를 입력해 주세요.'); return; }
+            // 서버에 비밀번호 검증 요청 (로컬 저장 전에 차단)
+            try {
+                const res = await fetch('/api/admin/verify-password', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    alert('저장 실패: ' + (data.error || '비밀번호 검증에 실패했습니다.'));
+                    return;
+                }
+            } catch (e) {
+                alert('네트워크 오류로 비밀번호 검증에 실패했습니다: ' + e.message);
+                return;
+            }
             // 편집 모드라면 현재 입력값을 메모리에 먼저 반영
             if (isPerDiemEditMode && currentEditingRegion && perDiemRates[currentEditingRegion]) {
                 _readModalInputsToRegion(currentEditingRegion);
@@ -2205,8 +2228,9 @@
             // 정상 저장 → 스냅샷 폐기 (롤백 안 함)
             _perDiemSnapshot = null;
             isPerDiemEditMode = false;
+            document.getElementById('pd-password').value = '';
             document.getElementById('perDiemSettingsModal').classList.add('hidden-el');
-            alert('일비 기준액이 저장되었습니다.');
+            alert('✅ 일비 기준액이 저장되었습니다.');
         }
 
         function autoSetPerDiem(el) {

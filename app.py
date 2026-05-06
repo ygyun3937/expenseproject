@@ -181,6 +181,18 @@ def create_app(testing=False):
             return jsonify({"error": str(e)}), 500
         return jsonify({"ok": True, "settings": updated})
 
+    @app.route("/api/admin/verify-password", methods=["POST"])
+    def api_verify_password():
+        """관리자 비밀번호 검증만 수행 (저장 동작 없음).
+
+        클라이언트가 localStorage 에 저장하는 항목(예: 일비 기준액)을
+        쓰기 전에 비밀번호를 검증하는 용도.
+        """
+        body = request.get_json(silent=True) or {}
+        if body.get("password") != ADMIN_PASSWORD:
+            return jsonify({"ok": False, "error": "비밀번호가 올바르지 않습니다."}), 401
+        return jsonify({"ok": True})
+
     @app.route("/api/export-excel", methods=["POST"])
     def api_export_excel():
         """현재 정산 상태를 엑셀(.xlsx)로 변환."""
