@@ -819,9 +819,9 @@
                 <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg mb-4 flex flex-col md:flex-row items-center justify-between gap-4 no-print shadow-sm">
                     <div class="flex items-center gap-3 w-full md:w-auto">
                         <span class="font-bold text-indigo-800 whitespace-nowrap">📅 출장 기간</span>
-                        <input type="date" id="tripStartDate" class="border border-indigo-300 rounded p-1.5 text-sm w-full md:w-36 outline-none focus:border-indigo-500 bg-white"> 
-                        <span class="text-indigo-400 font-bold">~</span> 
-                        <input type="date" id="tripEndDate" class="border border-indigo-300 rounded p-1.5 text-sm w-full md:w-36 outline-none focus:border-indigo-500 bg-white">
+                        <input type="date" id="tripStartDate" oninput="syncOverseasTripPeriodPrint()" class="border border-indigo-300 rounded p-1.5 text-sm w-full md:w-36 outline-none focus:border-indigo-500 bg-white">
+                        <span class="text-indigo-400 font-bold">~</span>
+                        <input type="date" id="tripEndDate" oninput="syncOverseasTripPeriodPrint()" class="border border-indigo-300 rounded p-1.5 text-sm w-full md:w-36 outline-none focus:border-indigo-500 bg-white">
                     </div>
                     <div class="flex items-center gap-2 w-full md:w-auto">
                         <button id="avgCalcBtn" onclick="fetchAverageRate()" class="bg-indigo-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-indigo-700 transition shadow-sm flex items-center whitespace-nowrap">
@@ -835,7 +835,7 @@
                     <div id="overseasExpenseSection" class="bg-white overflow-hidden shadow-lg border border-indigo-200 border-l-4 border-l-indigo-800 rounded-lg expense-section">
                         <div class="p-3 border-b border-indigo-100 flex justify-between items-center bg-indigo-50/50">
                             <div class="flex items-center">
-                                <h2 class="font-bold text-lg text-indigo-800 flex items-center"><span class="mr-2">✈️</span> 해외 개인경비 정산</h2>
+                                <h2 class="font-bold text-lg text-indigo-800 flex items-center"><span class="mr-2">✈️</span> 해외 개인경비 정산<span id="overseasTripPeriodPrint" class="print-only-tab ml-3 text-sm font-bold text-indigo-700"></span></h2>
                             </div>
                             <button onclick="addOverseasRow()" class="no-print text-sm bg-white hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded border border-indigo-200 font-bold shadow-sm transition">항목 추가</button>
                         </div>
@@ -1007,6 +1007,7 @@
             if (!c) return;
             const setVal = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined && v !== null) el.value = v; };
             ['userName','userDept','writeDate','carModel','carNumber','fuelType','fuelPrice','evEfficiency','evRate','evBaseCharge','tripStartDate','tripEndDate'].forEach(k => setVal(k, c[k]));
+            if (typeof syncOverseasTripPeriodPrint === 'function') syncOverseasTripPeriodPrint();
             // 헤더 3탭 동기화
             if (c.writeDate) { setVal('writeDate_L', c.writeDate); setVal('writeDate_O', c.writeDate); }
             if (typeof syncHeaderData === 'function') {
@@ -1291,7 +1292,16 @@
             mark('#overseasTripBody tr', overseasTripEmpty);
         }
 
+        function syncOverseasTripPeriodPrint() {
+            const start = document.getElementById('tripStartDate')?.value || '';
+            const end = document.getElementById('tripEndDate')?.value || '';
+            const el = document.getElementById('overseasTripPeriodPrint');
+            if (!el) return;
+            el.innerText = (start || end) ? `📅 출장기간: ${start || '-'} ~ ${end || '-'}` : '';
+        }
+
         function smartPrint() {
+            syncOverseasTripPeriodPrint();
             const domesticTotal = unformatComma(document.getElementById('grandTotal_P')?.innerText || '0');
             const overseasTotal = unformatComma(document.getElementById('overseasGrandTotal')?.innerText || '0');
             if (domesticTotal === 0 && overseasTotal === 0) {
@@ -2674,6 +2684,16 @@
         }
 
         // 환율 출처: 서울외국환중개(smbs.biz) 매매기준율. JPY는 서버에서 1엔 기준으로 환산됨.
+        // 100단위 고시 통화(JPY/VND/IDR)는 ÷100 후에도 값이 작아 4자리 표기 유지, 그 외 통화는 2자리.
+        const HUNDRED_BASIS_CURRENCIES = new Set(['JPY', 'VND', 'IDR']);
+        function formatRate(rate, currency) {
+            const cur = (currency || '').trim().toUpperCase();
+            const decimals = HUNDRED_BASIS_CURRENCIES.has(cur) ? 4 : 2;
+            // 부동소수점 오차 회피: 약간 더 높은 정밀도로 사전 정규화 후 toFixed
+            const v = Number(Number(rate).toFixed(decimals + 4));
+            return v.toFixed(decimals);
+        }
+
         async function fetchAverageRate() {
             const start = document.getElementById('tripStartDate').value; const end = document.getElementById('tripEndDate').value;
             if (!start || !end) return alert("출장 시작일과 도착일을 모두 입력해주세요.");
@@ -2692,8 +2712,8 @@
                     } catch(e) { failures.push(`${curr}: 네트워크 오류`); }
                     if (finalRate > 0) {
                         successCount++;
-                        document.querySelectorAll('#overseasTableBody tr').forEach(row => { if (row.querySelector('.ovs-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-rate').value = finalRate.toFixed(4); calcOvsRow(row.querySelector('.ovs-rate')); } });
-                        document.querySelectorAll('#overseasTripBody tr').forEach(row => { if (row.querySelector('.ovs-trip-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-trip-rate').value = finalRate.toFixed(4); calcOvsTripRow(row.querySelector('.ovs-trip-rate')); } });
+                        document.querySelectorAll('#overseasTableBody tr').forEach(row => { if (row.querySelector('.ovs-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-rate').value = formatRate(finalRate, curr); calcOvsRow(row.querySelector('.ovs-rate')); } });
+                        document.querySelectorAll('#overseasTripBody tr').forEach(row => { if (row.querySelector('.ovs-trip-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-trip-rate').value = formatRate(finalRate, curr); calcOvsTripRow(row.querySelector('.ovs-trip-rate')); } });
                     }
                 }
                 let msg = `✅ 서울외국환중개 매매기준율 ${successCount}개 통화 연동 완료 (기간평균)`;
@@ -2714,7 +2734,7 @@
                 const res = await fetch(`/api/exchange-rate?currency=${encodeURIComponent(currency)}`);
                 const data = await res.json();
                 if (res.ok && data.rate) {
-                    rateInput.value = data.rate.toFixed(4); formatComma(rateInput, true);
+                    rateInput.value = formatRate(data.rate, currency); formatComma(rateInput, true);
                     if(isTrip) calcOvsTripRow(rateInput); else calcOvsRow(rateInput);
                 } else if (!silent) {
                     alert(`환율 조회 실패 (${currency}): ${data.error || '서울외국환중개 응답 오류'}\n수동 입력해 주세요.`);
