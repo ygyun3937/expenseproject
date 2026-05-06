@@ -318,27 +318,29 @@
         #overseasTableBody tr[data-source="ai"] .ovs-memo-input,
         #tableBody tr[data-source="manual"] .memo-input,
         #overseasTableBody tr[data-source="manual"] .ovs-memo-input {
-            padding-left: 32px !important;
+            padding-left: 42px !important;
         }
         #tableBody tr[data-source="ai"] .memo-input::before,
         #overseasTableBody tr[data-source="ai"] .ovs-memo-input::before {
             content: "AI";
             position: absolute; left: 3px; top: 3px;
             background: #6366f1; color: white;
-            font-size: 9px; font-weight: 700;
-            padding: 1px 4px; border-radius: 3px;
-            line-height: 1.3;
+            font-size: 11px; font-weight: 800;
+            padding: 1px 6px; border-radius: 4px;
+            line-height: 1.3; letter-spacing: 0.3px;
             pointer-events: none; user-select: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
         }
         #tableBody tr[data-source="manual"] .memo-input::before,
         #overseasTableBody tr[data-source="manual"] .ovs-memo-input::before {
             content: "수기";
             position: absolute; left: 3px; top: 3px;
-            background: #94a3b8; color: white;
-            font-size: 9px; font-weight: 700;
-            padding: 1px 4px; border-radius: 3px;
-            line-height: 1.3;
+            background: #475569; color: white;
+            font-size: 11px; font-weight: 800;
+            padding: 1px 6px; border-radius: 4px;
+            line-height: 1.3; letter-spacing: 0.3px;
             pointer-events: none; user-select: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
         }
         @media print {
             /* AI 행 배지: 인쇄 시 숨김 + 패딩 복원 */
@@ -346,13 +348,17 @@
             tr[data-source="ai"] .ovs-memo-input::before { display: none !important; }
             tr[data-source="ai"] .memo-input,
             tr[data-source="ai"] .ovs-memo-input { padding-left: 2px !important; }
-            /* 수기 행 배지: 인쇄에도 유지 (감사 표시 — 어두운 회색으로 인쇄 가독성↑) */
+            /* 수기 행 배지: 인쇄에도 유지 — 검정 배경+굵은 흰 글씨로 가독성 강화 */
+            tr[data-source="manual"] .memo-input,
+            tr[data-source="manual"] .ovs-memo-input { padding-left: 32px !important; }
             tr[data-source="manual"] .memo-input::before,
             tr[data-source="manual"] .ovs-memo-input::before {
-                background: #4b5563 !important;
+                background: #111827 !important;
                 color: white !important;
-                font-size: 8px !important;
-                padding: 0px 3px !important;
+                font-size: 9px !important;
+                font-weight: 800 !important;
+                padding: 1px 4px !important;
+                box-shadow: none !important;
             }
         }
         @media print {
@@ -1442,8 +1448,9 @@
                 alert("정산할 금액이 없습니다. 항목을 입력한 뒤 다시 시도해 주세요.");
                 return;
             }
-            // 해외에 외화 항목이 있는데 환율이 누락된 행 검사 — 평균 환율 일괄 연동 필수
-            if (overseasTotal !== 0) {
+            // 해외에 외화 항목이 있는데 환율이 누락된 행 검사 — 항상 실행
+            // (환율이 0 이면 환산액도 0 이라 overseasGrandTotal 가드 안에 두면 검사가 스킵되는 버그 회피)
+            {
                 const missing = [];
                 document.querySelectorAll('#overseasTableBody tr').forEach((row, idx) => {
                     const hasCost = Array.from(row.querySelectorAll('.ovs-cost-input')).some(i => unformatComma(i.value) > 0);
