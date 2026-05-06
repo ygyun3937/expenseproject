@@ -898,38 +898,37 @@
                     </div>
 
                     <!-- Overseas Trip Allowance -->
-                    <div id="overseasTripSection" class="bg-white overflow-hidden shadow-lg border border-indigo-200 border-l-4 border-l-indigo-800 rounded-lg trip-allowance-section">
-                        <div class="p-3 border-b border-indigo-100 flex justify-between items-center bg-indigo-50/50">
+                    <div id="overseasTripSection" class="bg-white overflow-hidden shadow-lg border border-teal-200 border-l-4 border-l-[#19736E] rounded-lg trip-allowance-section">
+                        <div class="p-3 border-b border-teal-100 flex justify-between items-center bg-teal-50/50">
                             <div class="flex items-center">
-                                <h2 class="font-bold text-lg text-indigo-800 flex items-center"><span class="mr-2">📅</span> 해외 출장일비 정산</h2>
-                                <button onclick="openPerDiemSettings()" class="ml-3 text-[11px] bg-white border border-indigo-200 text-indigo-600 px-2 py-1 rounded shadow-sm hover:bg-indigo-50 font-bold flex items-center no-print">⚙️ 일비 기준 설정</button>
+                                <h2 class="font-bold text-lg text-[#19736E] flex items-center"><span class="mr-2">📅</span> 해외 출장일비 정산</h2>
+                                <button onclick="openPerDiemSettings()" class="ml-3 text-[11px] bg-white border border-[#19736E] text-[#19736E] px-2 py-1 rounded shadow-sm hover:bg-teal-50 font-bold flex items-center no-print">⚙️ 일비 기준 설정</button>
                             </div>
-                            <button onclick="addOverseasTripRow()" class="no-print text-sm bg-white hover:bg-indigo-100 text-indigo-700 px-4 py-1 rounded border border-indigo-200 font-bold shadow-sm transition">항목 추가</button>
+                            <button onclick="addOverseasTripRow()" class="no-print text-sm bg-white hover:bg-teal-50 text-[#19736E] px-4 py-1 rounded border border-[#19736E] font-bold shadow-sm transition">항목 추가</button>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full border-collapse table-auto text-[11.5px]" id="overseasTripAllowanceTable">
                                 <thead>
-                                    <tr class="bg-gray-50 border-b">
-                                        <th class="p-1 border-r text-center w-24">출장 기간</th>
-                                        <th class="p-1 border-r text-center">국가/도시</th>
-                                        <th class="p-1 border-r text-center w-16">지역</th>
-                                        <th class="p-1 border-r text-center w-20">직급</th>
-                                        <th class="p-1 border-r text-center w-16">지급 기준</th>
-                                        <th class="p-1 border-r text-center w-12">일수</th>
-                                        <th class="p-1 border-r text-center w-24">일비 단가</th>
-                                        <th class="p-1 border-r text-center w-16">통화</th>
-                                        <th class="p-1 border-r text-center w-20 text-blue-600">환율(₩)</th>
-                                        <th class="p-1 border-r text-center w-24 text-indigo-900">원화(₩)</th>
-                                        <th class="p-1 text-center w-16">비고</th>
+                                    <tr class="bg-teal-50/50 border-b border-teal-100 text-[#19736E]">
+                                        <th class="p-1 border-r text-center w-10 font-bold">번호</th>
+                                        <th class="p-1 border-r text-center w-40 font-bold">총출장기간</th>
+                                        <th class="p-1 border-r text-center w-40 font-bold">일비신청기간</th>
+                                        <th class="p-1 border-r text-center font-bold">국가/도시</th>
+                                        <th class="p-1 border-r text-center w-16 font-bold">지역</th>
+                                        <th class="p-1 border-r text-center w-20 font-bold">직급</th>
+                                        <th class="p-1 border-r text-center w-24 font-bold">일비</th>
+                                        <th class="p-1 border-r text-center w-12 font-bold">일수</th>
+                                        <th class="p-1 border-r text-center w-28 font-bold">합계</th>
+                                        <th class="p-1 text-center w-32 font-bold">비고</th>
                                         <th class="p-1 w-6 no-print"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="overseasTripBody"></tbody>
                                 <tfoot>
-                                    <tr class="bg-indigo-50 font-bold border-t border-indigo-200">
-                                        <td colspan="9" class="p-2 border-r text-right text-indigo-900 text-[12px] whitespace-nowrap">해외 출장일비 총계 :</td>
-                                        <td class="p-2 border-r text-right text-indigo-900 min-w-[80px] pr-2 font-bold text-[14px] whitespace-nowrap">₩ <span id="overseasTripFooterTotal">0</span></td>
-                                        <td colspan="2" class="p-2 text-left text-red-600 text-[11px] font-normal pl-2 bg-white">※ 출장 품의서 증빙</td>
+                                    <tr class="trip-footer font-bold border-t border-teal-100" style="background-color: rgba(204, 251, 241, 0.5);">
+                                        <td colspan="8" style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 border-r text-right text-[#19736E] text-[12.3px] whitespace-nowrap">해외 출장일비 합계 :</td>
+                                        <td style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 border-r text-right text-[#19736E] min-w-[80px] pr-2 font-bold text-[14px] whitespace-nowrap">₩ <span id="overseasTripFooterTotal">0</span></td>
+                                        <td colspan="2" style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 text-left text-red-600 text-[12.3px] font-normal pl-4 leading-relaxed border-r">※ 출장 품의서 증빙</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -2025,32 +2024,18 @@
         function autoSetPerDiem(el) {
             const tr = el.closest('tr');
             if(!tr) return;
-            const baseSelect = tr.querySelector('.ovs-trip-base');
-            if(!baseSelect) { autoFetchRate(el, false); return; }
             const regionSelect = tr.querySelector('.ovs-trip-region');
             const rankSelect = tr.querySelector('.ovs-trip-rank');
-            const currInput = tr.querySelector('.ovs-trip-curr');
             const priceInput = tr.querySelector('.ovs-trip-price');
-            const rateInput = tr.querySelector('.ovs-trip-rate');
-            const fetchBtn = tr.querySelector('button');
+            if (!regionSelect || !rankSelect || !priceInput) return;
             const region = regionSelect.value;
             const rank = rankSelect.value;
-            const base = baseSelect.value;
-            if (base === 'krw') {
-                currInput.value = 'KRW'; currInput.readOnly = true; currInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-                rateInput.value = "1"; rateInput.readOnly = true; rateInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-                if(fetchBtn) fetchBtn.style.display = 'none';
-                if (region && rank && perDiemRates[region] && perDiemRates[region][rank]) { priceInput.value = perDiemRates[region][rank].krw; formatComma(priceInput, true); }
-                calcOvsTripRow(priceInput);
-            } else {
-                currInput.readOnly = false; currInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                if(currInput.value === 'KRW' || currInput.value === '원' || currInput.value === '원화') currInput.value = 'USD';
-                rateInput.readOnly = false; rateInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                if(fetchBtn) fetchBtn.style.display = 'block';
-                if (region && rank && perDiemRates[region] && perDiemRates[region][rank]) { priceInput.value = perDiemRates[region][rank].fc; formatComma(priceInput, true); }
-                calcOvsTripRow(priceInput);
-                if (currInput.value && currInput.value !== 'KRW' && (el === currInput || el === rankSelect || el === baseSelect || el === regionSelect)) { autoFetchRate(currInput, true, true); }
+            // 일비는 KRW 기준만 사용 (통화/환율 컬럼 제거됨)
+            if (region && rank && perDiemRates[region] && perDiemRates[region][rank]) {
+                priceInput.value = perDiemRates[region][rank].krw;
+                formatComma(priceInput, true);
             }
+            calcOvsTripRow(priceInput);
         }
 
         // 업로드한 영수증 원본 파일을 증빙 PDF 병합용으로 보관
@@ -2736,7 +2721,7 @@
             if (!start || !end) return alert("출장 시작일과 도착일을 모두 입력해주세요.");
             const btn = document.getElementById('avgCalcBtn'); const originalText = btn.innerHTML; btn.innerHTML = `<div class="loader-small mx-auto border-white"></div>`; btn.disabled = true;
             try {
-                const currencies = new Set(); document.querySelectorAll('.ovs-curr, .ovs-trip-curr').forEach(el => { const c = el.value.trim().toUpperCase(); if (c && c !== 'KRW' && c !== '원' && c !== '원화') currencies.add(c); });
+                const currencies = new Set(); document.querySelectorAll('.ovs-curr').forEach(el => { const c = el.value.trim().toUpperCase(); if (c && c !== 'KRW' && c !== '원' && c !== '원화') currencies.add(c); });
                 if (currencies.size === 0) { alert("표에 입력된 외화 내역이 없습니다."); return; }
                 let successCount = 0; let failures = [];
                 for (const curr of currencies) {
@@ -2750,7 +2735,6 @@
                     if (finalRate > 0) {
                         successCount++;
                         document.querySelectorAll('#overseasTableBody tr').forEach(row => { if (row.querySelector('.ovs-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-rate').value = formatRate(finalRate, curr); calcOvsRow(row.querySelector('.ovs-rate')); } });
-                        document.querySelectorAll('#overseasTripBody tr').forEach(row => { if (row.querySelector('.ovs-trip-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-trip-rate').value = formatRate(finalRate, curr); calcOvsTripRow(row.querySelector('.ovs-trip-rate')); } });
                     }
                 }
                 let msg = `✅ 서울외국환중개 매매기준율 ${successCount}개 통화 연동 완료 (기간평균)`;
@@ -2759,20 +2743,22 @@
             } catch (e) { alert("환율 연동 오류"); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
 
-        async function autoFetchRate(btnOrInput, isTrip = false, silent = false) {
+        async function autoFetchRate(btnOrInput, _unused = false, silent = false) {
             const tr = btnOrInput.closest('tr'); if(!tr) return;
-            let currency = tr.querySelector(isTrip ? '.ovs-trip-curr' : '.ovs-curr').value.trim().toUpperCase();
-            const rateInput = tr.querySelector(isTrip ? '.ovs-trip-rate' : '.ovs-rate');
+            const currInp = tr.querySelector('.ovs-curr');
+            const rateInput = tr.querySelector('.ovs-rate');
+            if (!currInp || !rateInput) return;
+            let currency = currInp.value.trim().toUpperCase();
             const btn = tr.querySelector('button');
             if(!currency) return;
-            if(currency === 'KRW' || currency === '원' || currency === '원화') { tr.querySelector(isTrip ? '.ovs-trip-curr' : '.ovs-curr').value = 'KRW'; rateInput.value = "1"; if(isTrip) calcOvsTripRow(rateInput); else calcOvsRow(rateInput); return; }
+            if(currency === 'KRW' || currency === '원' || currency === '원화') { currInp.value = 'KRW'; rateInput.value = "1"; calcOvsRow(rateInput); return; }
             let originalIcon = ""; if(btn) { originalIcon = btn.innerHTML; btn.innerHTML = `<div class="loader-small mx-auto border-indigo-400 border-t-transparent"></div>`; }
             try {
                 const res = await fetch(`/api/exchange-rate?currency=${encodeURIComponent(currency)}`);
                 const data = await res.json();
                 if (res.ok && data.rate) {
                     rateInput.value = formatRate(data.rate, currency); formatComma(rateInput, true);
-                    if(isTrip) calcOvsTripRow(rateInput); else calcOvsRow(rateInput);
+                    calcOvsRow(rateInput);
                 } else if (!silent) {
                     alert(`환율 조회 실패 (${currency}): ${data.error || '서울외국환중개 응답 오류'}\n수동 입력해 주세요.`);
                 }
@@ -2832,11 +2818,50 @@
         }
 
         function addOverseasTripRow() {
-            const tbody = document.getElementById('overseasTripBody'); const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50 transition";
-            tr.innerHTML = `<td class="border-r"><div contenteditable="true" class="editable-cell text-center" placeholder="기간"></div></td><td class="border-r"><div contenteditable="true" class="editable-cell text-center" placeholder="국가/도시"></div></td><td class="border-r"><select class="table-input ovs-trip-region text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option><option value="A">가 지역</option><option value="B">나 지역</option><option value="C">다 지역</option></select></td><td class="border-r"><select class="table-input ovs-trip-rank text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">직급 선택</option><option value="exec">임원</option><option value="gm">부장</option><option value="dgm">차장</option><option value="manager">과장</option><option value="am">대리</option><option value="sv">주임</option><option value="staff">사원</option></select></td><td class="border-r"><select class="table-input ovs-trip-base text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-blue-700" onchange="autoSetPerDiem(this)"><option value="fc">외화</option><option value="krw">원화</option></select></td><td class="border-r"><input type="number" class="table-input ovs-trip-days text-center" placeholder="" oninput="calcOvsTripRow(this)"></td><td class="border-r"><input type="text" class="table-input ovs-trip-price text-right text-blue-700 font-bold" placeholder="" oninput="formatComma(this, true); calcOvsTripRow(this);" onblur="formatAmount2Decimals(this); calcOvsTripRow(this);"></td><td class="border-r"><input type="text" class="table-input ovs-trip-curr uppercase font-bold text-gray-600" value="USD" placeholder="USD" onchange="autoSetPerDiem(this)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-trip-rate text-right text-indigo-700 font-bold pr-6" placeholder="" oninput="formatComma(this, true); calcOvsTripRow(this);"><button onclick="autoFetchRate(this, true)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-trip-krw text-right font-bold text-blue-900" readonly value="" placeholder=""></td><td class="border-r"><div contenteditable="true" class="editable-cell text-left" placeholder="비고"></div></td><td class="no-print text-center"><button onclick="this.closest('tr').remove(); updateOverseasTotals();" class="text-red-300 hover:text-red-500">×</button></td>`;
+            const tbody = document.getElementById('overseasTripBody'); const tr = document.createElement('tr'); tr.className = "border-b border-teal-100 hover:bg-teal-50/30 transition";
+            tr.innerHTML = `<td class="p-1 border-r border-teal-100 text-center text-slate-400 text-[12px] bg-white font-bold ovs-trip-seq">1</td><td class="p-1 border-r border-teal-100 text-center bg-white"><div class="flex items-center justify-center gap-1"><input type="date" class="ovs-trip-total-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-total-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none"></div></td><td class="p-1 border-r border-teal-100 text-center bg-white"><div class="flex items-center justify-center gap-1"><input type="date" class="ovs-trip-claim-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-claim-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"></div></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-center" placeholder="국가/도시"></div></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-region text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option><option value="A">가 지역</option><option value="B">나 지역</option><option value="C">다 지역</option></select></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-rank text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option><option value="exec">임원</option><option value="gm">부장</option><option value="dgm">차장</option><option value="manager">과장</option><option value="am">대리</option><option value="sv">주임</option><option value="staff">사원</option></select></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-price text-right text-[#19736E] font-bold" placeholder="" oninput="formatComma(this, true); calcOvsTripRow(this);"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="number" class="table-input ovs-trip-days text-center" placeholder="" oninput="calcOvsTripRow(this)"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-krw text-right font-bold text-[#19736E]" readonly value="" placeholder=""></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-left" placeholder="비고"></div></td><td class="p-1 border-teal-100 no-print bg-white"><div class="flex items-center justify-center gap-1"><button onclick="this.closest('tr').remove(); reIndexOverseasTripRows(); recalcOverseasTripTotal(); updateOverseasTotals();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
             tbody.appendChild(tr);
+            reIndexOverseasTripRows();
         }
-        function calcOvsTripRow(inp) { const tr = inp.closest('tr'); const days = parseFloat(tr.querySelector('.ovs-trip-days').value) || 0; const price = unformatComma(tr.querySelector('.ovs-trip-price').value); const rate = unformatComma(tr.querySelector('.ovs-trip-rate').value); const krw = Math.round(days * price * rate); tr.querySelector('.ovs-trip-krw').value = krw > 0 ? krw.toLocaleString() : ''; let tripTotal = 0; document.querySelectorAll('.ovs-trip-krw').forEach(el => tripTotal += unformatComma(el.value)); document.getElementById('overseasTripFooterTotal').innerText = tripTotal.toLocaleString(); updateOverseasTotals(); }
+
+        function reIndexOverseasTripRows() {
+            document.querySelectorAll('#overseasTripBody tr').forEach((tr, idx) => {
+                const seq = tr.querySelector('.ovs-trip-seq');
+                if (seq) seq.innerText = (idx + 1);
+            });
+        }
+
+        // 일비신청기간 입력 시 일수 자동 계산
+        function autoFillTripDays(inp) {
+            const tr = inp.closest('tr');
+            const start = tr.querySelector('.ovs-trip-claim-start')?.value;
+            const end = tr.querySelector('.ovs-trip-claim-end')?.value;
+            if (start && end) {
+                const s = new Date(start), e = new Date(end);
+                if (!isNaN(s) && !isNaN(e) && e >= s) {
+                    const days = Math.round((e - s) / 86400000) + 1;
+                    const daysInp = tr.querySelector('.ovs-trip-days');
+                    if (daysInp) { daysInp.value = days; calcOvsTripRow(daysInp); }
+                }
+            }
+        }
+
+        function recalcOverseasTripTotal() {
+            let total = 0;
+            document.querySelectorAll('.ovs-trip-krw').forEach(el => total += unformatComma(el.value));
+            const footer = document.getElementById('overseasTripFooterTotal');
+            if (footer) footer.innerText = total.toLocaleString();
+        }
+
+        function calcOvsTripRow(inp) {
+            const tr = inp.closest('tr');
+            const days = parseFloat(tr.querySelector('.ovs-trip-days').value) || 0;
+            const price = unformatComma(tr.querySelector('.ovs-trip-price').value);
+            const krw = Math.round(days * price);
+            tr.querySelector('.ovs-trip-krw').value = krw > 0 ? krw.toLocaleString() : '';
+            recalcOverseasTripTotal();
+            updateOverseasTotals();
+        }
         function updateOvsSortAttributes(input) { const tr = input.closest('tr'); tr.setAttribute('data-year', tr.querySelector('.val-year')?.value || defaultYearForRow()); tr.setAttribute('data-month', tr.querySelector('.val-month').value || 99); tr.setAttribute('data-day', tr.querySelector('.val-day').value || 99); sortAndReindexOverseas(); }
         function reIndexOverseasRows() { let seq = 1; document.querySelectorAll('#overseasTableBody tr').forEach(row => { const seqInput = row.querySelector('.ovs-seq'); const m = row.querySelector('.val-month')?.value; const d = row.querySelector('.val-day')?.value; if (seqInput && (m || d)) seqInput.value = seq++; else if (seqInput) seqInput.value = ""; }); }
     </script>
