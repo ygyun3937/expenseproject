@@ -1461,6 +1461,26 @@
                 alert("정산할 금액이 없습니다. 항목을 입력한 뒤 다시 시도해 주세요.");
                 return;
             }
+            // 수기 입력 행 영수증 첨부 검증 — 영수증 미첨부 수기 행이 있으면 인쇄 차단
+            {
+                const noReceipt = [];
+                const checkManual = (tbodyId, costSel, prefix) => {
+                    document.querySelectorAll(`#${tbodyId} tr[data-source="manual"]`).forEach((tr, idx) => {
+                        const hasCost = Array.from(tr.querySelectorAll(costSel)).some(i => unformatComma(i.value) > 0);
+                        if (!hasCost) return;
+                        if (tr.getAttribute('data-receipt-file')) return;
+                        const m = tr.querySelector('.val-month')?.value || '?';
+                        const d = tr.querySelector('.val-day')?.value || '?';
+                        noReceipt.push(`${prefix} ${idx + 1}번째 행 (${m}/${d})`);
+                    });
+                };
+                checkManual('tableBody', '.cost-input', '국내');
+                checkManual('overseasTableBody', '.ovs-cost-input', '해외');
+                if (noReceipt.length > 0) {
+                    alert(`❌ 인쇄할 수 없습니다.\n\n수기 입력 항목 ${noReceipt.length}건에 영수증이 첨부되지 않았습니다:\n• ${noReceipt.slice(0, 5).join('\n• ')}${noReceipt.length > 5 ? `\n외 ${noReceipt.length - 5}건` : ''}\n\n각 행 우측의 회색 📎+ 버튼을 클릭해 영수증을 첨부한 뒤 다시 인쇄해 주세요.`);
+                    return;
+                }
+            }
             // 해외 인쇄 검증: 출장기간 설정 + [평균 환율 일괄 연동] 적용 + 모든 외화 행이 평균환율과 일치
             {
                 const overseasRows = Array.from(document.querySelectorAll('#overseasTableBody tr'));
@@ -1731,6 +1751,11 @@
                 const memo = tr.querySelector('.memo-input')?.innerText?.trim() || '';
                 if (!memo) violations.push({ s:'warning', m:`${idx+1}번째 행(${month}/${day}): 비고/상세 내용이 비어 있습니다.` });
 
+                // 수기 입력 행 영수증 첨부 필수
+                if (tr.getAttribute('data-source') === 'manual' && !tr.getAttribute('data-receipt-file')) {
+                    violations.push({ s:'error', m:`${idx+1}번째 행(${month}/${day}): 수기 입력 — 영수증 첨부 필요 (회색 📎+ 버튼)` });
+                }
+
                 // 식비 한도 경고
                 if (tr.querySelectorAll('.cost-input')[0]?.classList.contains('meal-limit-warning')) {
                     violations.push({ s:'info', m:`${idx+1}번째 행: 식비 한도 초과분은 자동 캡 적용됨. 원본은 메모 기록.` });
@@ -1772,6 +1797,10 @@
                     if (!month || !day) violations.push({ s:'warning', m:`해외 ${idx+1}번 행: 월/일이 비어 있습니다.` });
                     if (!curr) violations.push({ s:'error', m:`해외 ${idx+1}번 행: 통화 미입력` });
                     if (rate <= 0) violations.push({ s:'error', m:`해외 ${idx+1}번 행(${curr}): 환율 미입력 — 서울외국환중개 매매기준율 조회 필요` });
+                    // 수기 입력 행 영수증 첨부 필수
+                    if (tr.getAttribute('data-source') === 'manual' && !tr.getAttribute('data-receipt-file')) {
+                        violations.push({ s:'error', m:`해외 ${idx+1}번 행(${month}/${day}): 수기 입력 — 영수증 첨부 필요 (회색 📎+ 버튼)` });
+                    }
                     // 해외 접대비 (ovs-cat-4) 미입력
                     const entInp = tr.querySelector('.ovs-cat-4');
                     if (entInp?.classList.contains('entertainment-pending')) {
