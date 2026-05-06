@@ -212,6 +212,7 @@
         /* 합계 행(tfoot) 모든 셀에 동일한 배경색 강제 적용 — 브라우저별 tr bg 렌더 차이 회피 */
         #settlementTable tfoot tr, #settlementTable tfoot td { background-color: rgba(219, 234, 254, 0.5) !important; }
         #tripAllowanceTable tfoot tr, #tripAllowanceTable tfoot td { background-color: rgba(204, 251, 241, 0.5) !important; }
+        #tripAllowanceTable tfoot td, #overseasTripAllowanceTable tfoot td { height: 3.2rem; vertical-align: middle; }
         #fuelLogTable tfoot tr, #fuelLogTable tfoot td { background-color: #fefce8 !important; }
         #overseasTable tfoot tr, #overseasTable tfoot td { background-color: rgba(224, 231, 255, 0.5) !important; }
         #overseasTripAllowanceTable tfoot tr, #overseasTripAllowanceTable tfoot td { background-color: rgba(204, 251, 241, 0.5) !important; }
@@ -285,81 +286,37 @@
             .landscape-header { display: none !important; }
             .print-only-tab { display: none !important; }
         }
+        @media print {
+            /* 인쇄 시 출장기간 텍스트는 헤더(h2) 다음 줄에 작은 글씨로 노출 */
+            #overseasTripPeriodPrint { font-size: 10px !important; font-weight: 600 !important; margin-left: 8px !important; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-2 md:p-6 font-sans text-gray-800 relative">
 
-    <!-- 지역/직급별 일비 기준액 설정 모달 -->
-    <div id="perDiemSettingsModal" class="hidden-el fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center no-print backdrop-blur-sm">
-        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg mx-4 border-t-8 border-indigo-600 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-black text-indigo-900 mb-2 flex items-center"><span class="mr-2">⚙️</span> 지역/직급별 일비 기준 설정</h3>
-            <p class="text-xs text-gray-500 mb-4">지역을 선택해 직급별 기준액을 설정합니다. ‘+’로 새 지역을 추가하거나 🗑로 삭제할 수 있습니다.</p>
+    <!-- 지역/직급별 일비 기준액 — 보기 전용 뷰어 (편집은 ⚙️ 관리자 설정에서) -->
+    <div id="perDiemViewerModal" class="hidden-el fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center no-print backdrop-blur-sm" onclick="if(event.target===this) closePerDiemViewer()">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md mx-4 border-t-8 border-indigo-600 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-black text-indigo-900 mb-1 flex items-center"><span class="mr-2">📋</span> 지역/직급별 일비 기준 (보기)</h3>
+            <p class="text-xs text-gray-500 mb-4">현재 설정된 일비 기준액. 수정은 우측 상단 <b>⚙️ 설정</b>에서.</p>
 
             <div class="mb-3 bg-indigo-50 p-2 rounded-lg border border-indigo-100">
-                <select id="pd-region-select" onchange="loadPerDiemSettingsUI()" class="w-full border border-indigo-300 rounded p-2 text-sm font-bold bg-white text-indigo-900 outline-none cursor-pointer shadow-sm"></select>
-                <div class="grid grid-cols-[70px_1fr] gap-2 mt-2">
-                    <label class="text-[11px] font-bold text-indigo-800 self-center text-right">지역명</label>
-                    <input type="text" id="pd-region-name" disabled class="border border-indigo-200 rounded p-1.5 text-sm bg-white outline-none disabled:bg-gray-50 disabled:text-gray-600" placeholder="예: 가 지역">
-                    <label class="text-[11px] font-bold text-indigo-800 self-center text-right">설명</label>
-                    <input type="text" id="pd-region-desc" disabled class="border border-indigo-200 rounded p-1.5 text-sm bg-white outline-none disabled:bg-gray-50 disabled:text-gray-600" placeholder="예: 북미, 유럽, 일본, 중동 등">
+                <select id="pdv-region-select" onchange="loadPerDiemViewerUI()" class="w-full border border-indigo-300 rounded p-2 text-sm font-bold bg-white text-indigo-900 outline-none cursor-pointer shadow-sm"></select>
+                <div class="grid grid-cols-[60px_1fr] gap-1.5 mt-2 text-sm">
+                    <div class="text-right font-bold text-indigo-800 self-center">지역명</div>
+                    <div id="pdv-name" class="bg-white rounded p-1.5 text-gray-700">-</div>
+                    <div class="text-right font-bold text-indigo-800 self-center">설명</div>
+                    <div id="pdv-desc" class="bg-white rounded p-1.5 text-gray-700">-</div>
                 </div>
             </div>
 
-            <!-- 액션 버튼 — 보기 모드 -->
-            <div id="pd-view-actions" class="flex gap-2 mb-3">
-                <button onclick="enterPerDiemEditMode()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold px-3 py-2 rounded shadow-sm">✏️ 수정</button>
-                <button onclick="addPerDiemRegion()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-3 py-2 rounded shadow-sm">＋ 추가</button>
-                <button onclick="deletePerDiemRegion()" class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-bold px-3 py-2 rounded shadow-sm">🗑 삭제</button>
+            <div class="grid grid-cols-[70px_1fr] gap-1 mb-1 text-[11px] font-bold text-center text-indigo-800 bg-gray-100 p-1.5 rounded">
+                <div>직급</div><div>원화(KRW) 기준액</div>
             </div>
-            <!-- 액션 버튼 — 편집 모드 -->
-            <div id="pd-edit-actions" class="hidden-el flex gap-2 mb-3">
-                <button onclick="exitPerDiemEditMode(true)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-3 py-2 rounded shadow-sm">✓ 적용</button>
-                <button onclick="exitPerDiemEditMode(false)" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold px-3 py-2 rounded shadow-sm">편집 취소</button>
-            </div>
+            <div id="pdv-rates" class="space-y-1 mb-4"></div>
 
-            <div class="grid grid-cols-[70px_1fr] gap-2 mb-2 text-[11px] font-bold text-center text-indigo-800 bg-gray-100 p-2 rounded">
-                <div>직급 구분</div>
-                <div>원화(KRW) 기준액</div>
-            </div>
-
-            <div class="space-y-2 mb-6">
-                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
-                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">임원</label>
-                    <input type="number" id="pd-exec-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
-                </div>
-                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
-                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">부장</label>
-                    <input type="number" id="pd-gm-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
-                </div>
-                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
-                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">차장</label>
-                    <input type="number" id="pd-dgm-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
-                </div>
-                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
-                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">과장</label>
-                    <input type="number" id="pd-manager-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
-                </div>
-                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
-                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">대리</label>
-                    <input type="number" id="pd-am-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
-                </div>
-                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
-                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">주임</label>
-                    <input type="number" id="pd-sv-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
-                </div>
-                <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
-                    <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">사원</label>
-                    <input type="number" id="pd-staff-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
-                </div>
-            </div>
-
-            <div class="bg-amber-50 border border-amber-200 rounded p-2 mb-3">
-                <label class="text-[11px] font-bold text-amber-800 block mb-1">🔒 관리자 비밀번호 <span class="font-normal text-gray-500">(저장 시 필요)</span></label>
-                <input type="password" id="pd-password" class="w-full border border-amber-300 rounded p-1.5 text-sm bg-white outline-none focus:border-amber-500" placeholder="비밀번호">
-            </div>
             <div class="flex gap-2">
-                <button onclick="closePerDiemSettings()" class="flex-1 bg-gray-100 text-gray-600 px-4 py-2.5 rounded-lg hover:bg-gray-200 transition font-bold text-sm">취소</button>
-                <button onclick="savePerDiemSettings()" class="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition font-bold text-sm shadow-sm">저장하기</button>
+                <button onclick="closePerDiemViewer()" class="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition font-bold text-sm shadow-sm">닫기</button>
             </div>
         </div>
     </div>
@@ -429,9 +386,36 @@
                     </div>
                     <p class="text-[10px] text-gray-400 mt-1">유류비 섹션의 🔄 버튼이 이 값을 가져옵니다. 0 입력 시 미적용.</p>
                 </div>
+                <hr>
+                <div>
+                    <p class="text-xs font-bold text-slate-700 mb-2">🌍 지역/직급별 일비 기준 (해외 출장)</p>
+                    <div class="bg-indigo-50 p-2 rounded border border-indigo-100">
+                        <div class="flex items-center gap-2 mb-2">
+                            <select id="pd-region-select" onchange="loadPerDiemSettingsUI()" class="flex-1 border border-indigo-300 rounded p-1.5 text-sm font-bold bg-white text-indigo-900 outline-none cursor-pointer"></select>
+                            <button type="button" onclick="addPerDiemRegion()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-2.5 py-1.5 rounded shadow-sm" title="지역 추가">＋</button>
+                            <button type="button" onclick="deletePerDiemRegion()" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold px-2.5 py-1.5 rounded shadow-sm" title="현재 지역 삭제">🗑</button>
+                        </div>
+                        <div class="grid grid-cols-[60px_1fr] gap-1.5 mb-2">
+                            <label class="text-[11px] font-bold text-indigo-800 self-center text-right">지역명</label>
+                            <input type="text" id="pd-region-name" class="border border-indigo-200 rounded p-1 text-sm bg-white outline-none" placeholder="예: 가 지역">
+                            <label class="text-[11px] font-bold text-indigo-800 self-center text-right">설명</label>
+                            <input type="text" id="pd-region-desc" class="border border-indigo-200 rounded p-1 text-sm bg-white outline-none" placeholder="예: 북미, 유럽, 일본, 중동 등">
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <div class="flex items-center gap-1.5"><label class="text-xs font-bold text-gray-700 w-10 text-right shrink-0">임원</label><input type="number" id="pd-exec-krw" class="border border-gray-300 rounded p-1 w-full text-right text-sm font-bold text-indigo-700 outline-none" placeholder="원화"></div>
+                            <div class="flex items-center gap-1.5"><label class="text-xs font-bold text-gray-700 w-10 text-right shrink-0">부장</label><input type="number" id="pd-gm-krw" class="border border-gray-300 rounded p-1 w-full text-right text-sm font-bold text-indigo-700 outline-none" placeholder="원화"></div>
+                            <div class="flex items-center gap-1.5"><label class="text-xs font-bold text-gray-700 w-10 text-right shrink-0">차장</label><input type="number" id="pd-dgm-krw" class="border border-gray-300 rounded p-1 w-full text-right text-sm font-bold text-indigo-700 outline-none" placeholder="원화"></div>
+                            <div class="flex items-center gap-1.5"><label class="text-xs font-bold text-gray-700 w-10 text-right shrink-0">과장</label><input type="number" id="pd-manager-krw" class="border border-gray-300 rounded p-1 w-full text-right text-sm font-bold text-indigo-700 outline-none" placeholder="원화"></div>
+                            <div class="flex items-center gap-1.5"><label class="text-xs font-bold text-gray-700 w-10 text-right shrink-0">대리</label><input type="number" id="pd-am-krw" class="border border-gray-300 rounded p-1 w-full text-right text-sm font-bold text-indigo-700 outline-none" placeholder="원화"></div>
+                            <div class="flex items-center gap-1.5"><label class="text-xs font-bold text-gray-700 w-10 text-right shrink-0">주임</label><input type="number" id="pd-sv-krw" class="border border-gray-300 rounded p-1 w-full text-right text-sm font-bold text-indigo-700 outline-none" placeholder="원화"></div>
+                            <div class="flex items-center gap-1.5 col-span-2"><label class="text-xs font-bold text-gray-700 w-10 text-right shrink-0">사원</label><input type="number" id="pd-staff-krw" class="border border-gray-300 rounded p-1 w-full text-right text-sm font-bold text-indigo-700 outline-none" placeholder="원화"></div>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1">변경 후 저장 시 이미 입력된 출장일비 행도 자동 갱신됩니다.</p>
+                </div>
             </div>
             <div class="flex gap-2 mt-5">
-                <button onclick="document.getElementById('adminSettingsModal').classList.add('hidden-el')" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition font-bold text-sm">취소</button>
+                <button onclick="closeAdminSettings()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition font-bold text-sm">취소</button>
                 <button onclick="saveAdminSettings()" class="flex-1 bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition font-bold text-sm shadow-sm">저장</button>
             </div>
         </div>
@@ -790,7 +774,7 @@
                     <!-- Domestic Trip Allowance -->
                     <div id="tripSection" class="bg-white overflow-hidden shadow-lg border border-teal-200 border-l-4 border-l-[#19736E] rounded-lg trip-allowance-section">
                         <div class="p-3 border-b border-teal-100 flex justify-between items-center bg-teal-50/50"><h2 class="font-bold text-lg text-[#19736E] flex items-center"><span class="mr-2">📅</span> 출장일비 정산</h2><button onclick="addTripRow()" class="no-print text-sm bg-white hover:bg-teal-50 text-[#19736E] px-4 py-1 rounded border border-[#19736E] font-bold shadow-sm transition">항목 추가</button></div>
-                        <div class="overflow-x-auto"><table class="w-full border-collapse table-auto" id="tripAllowanceTable"><tbody id="tripBody"><tr><td id="tripLabel" class="bg-slate-50 text-[#19736E] font-bold text-center w-12 border-r border-b text-[12.3px] whitespace-nowrap">출장<br>일비</td></tr></tbody><tfoot><tr class="trip-footer font-bold border-t border-teal-100" style="background-color: rgba(204, 251, 241, 0.5);"><td colspan="2" style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 border-r text-center text-[#19736E] text-[13px] whitespace-nowrap">합계</td><td style="background-color: rgba(204, 251, 241, 0.5);" class="py-2 px-3 border-r text-right text-[#19736E] min-w-[80px] font-black italic text-xl whitespace-nowrap" id="totalTripAllowance">0</td><td colspan="6" style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 text-left text-red-600 text-[12.3px] font-normal pl-4 leading-relaxed border-r">※ 증빙: 출장신청서 또는 출장보고서</td></tr></tfoot></table></div>
+                        <div class="overflow-x-auto"><table class="w-full border-collapse table-auto" id="tripAllowanceTable"><tbody id="tripBody"></tbody><tfoot><tr class="trip-footer font-bold border-t border-teal-100" style="background-color: rgba(204, 251, 241, 0.5);"><td style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 border-r text-center text-[#19736E] text-[13px] whitespace-nowrap">합계</td><td style="background-color: rgba(204, 251, 241, 0.5);" class="py-2 px-3 border-r text-right text-[#19736E] min-w-[80px] font-black italic text-xl whitespace-nowrap" id="totalTripAllowance">0</td><td colspan="7" style="background-color: rgba(204, 251, 241, 0.5);" class="p-2 text-left text-red-600 text-[12.3px] font-normal pl-4 leading-relaxed border-r">※ 증빙: 출장신청서 또는 출장보고서</td></tr></tfoot></table></div>
                     </div>
                 </div>
             </div>
@@ -912,7 +896,7 @@
                         <div class="p-3 border-b border-teal-100 flex justify-between items-center bg-teal-50/50">
                             <div class="flex items-center">
                                 <h2 class="font-bold text-lg text-[#19736E] flex items-center"><span class="mr-2">📅</span> 해외 출장일비 정산</h2>
-                                <button onclick="openPerDiemSettings()" class="ml-3 text-[11px] bg-white border border-[#19736E] text-[#19736E] px-2 py-1 rounded shadow-sm hover:bg-teal-50 font-bold flex items-center no-print">⚙️ 일비 기준 설정</button>
+                                <button onclick="openPerDiemViewer()" class="ml-3 text-[11px] bg-white border border-[#19736E] text-[#19736E] px-2 py-1 rounded shadow-sm hover:bg-teal-50 font-bold flex items-center no-print" title="현재 설정된 일비 기준 보기 (편집은 ⚙️ 관리자 설정에서)">📋 일비 기준 보기</button>
                             </div>
                             <button onclick="addOverseasTripRow()" class="no-print text-sm bg-white hover:bg-teal-50 text-[#19736E] px-4 py-1 rounded border border-[#19736E] font-bold shadow-sm transition">항목 추가</button>
                         </div>
@@ -1103,7 +1087,7 @@
             // 출장일비 행 복원
             const tripTbody = document.getElementById('tripBody');
             if (tripTbody && Array.isArray(c.tripRows) && c.tripRows.length > 0) {
-                tripTbody.innerHTML = '<tr><td id="tripLabel" class="p-1 border-r border-b text-center font-bold bg-slate-50 text-[12.3px] whitespace-nowrap" rowspan="1">출장일비<br><span class="text-[10px] font-normal text-slate-500">(30,000원/일)</span></td></tr>';
+                tripTbody.innerHTML = '';
                 tripRowCount = 0;
                 c.tripRows.forEach((r, i) => {
                     addTripRow();
@@ -1919,11 +1903,29 @@
                 document.getElementById('as-fuel-lpg').value = d.fuel_price_lpg || '';
             } catch(e) {}
             document.getElementById('as-password').value = '';
+            // 일비 기준 — 스냅샷 후 첫 지역 로드
+            _perDiemSnapshot = JSON.parse(JSON.stringify(perDiemRates));
+            const firstKey = Object.keys(perDiemRates)[0] || 'A';
+            currentEditingRegion = firstKey;
+            _populateRegionSelect(firstKey);
+            loadPerDiemSettingsUI();
             document.getElementById('adminSettingsModal').classList.remove('hidden-el');
+        }
+        function closeAdminSettings() {
+            // 저장하지 않고 닫기 → 일비 변경사항 롤백
+            if (_perDiemSnapshot) {
+                perDiemRates = _perDiemSnapshot;
+                _perDiemSnapshot = null;
+            }
+            document.getElementById('adminSettingsModal').classList.add('hidden-el');
         }
         async function saveAdminSettings() {
             const password = document.getElementById('as-password').value;
             if (!password) { alert('관리자 비밀번호를 입력해 주세요.'); return; }
+            // 일비 기준 — 현재 입력값을 perDiemRates 에 반영
+            if (currentEditingRegion && perDiemRates[currentEditingRegion]) {
+                _readModalInputsToRegion(currentEditingRegion);
+            }
             const settings = {
                 meal_limit_per_person: parseInt(document.getElementById('as-meal').value) || 0,
                 lodging_limit_per_night: parseInt(document.getElementById('as-lodge').value) || 0,
@@ -1942,6 +1944,11 @@
                 });
                 const data = await res.json();
                 if (!res.ok) { alert('저장 실패: ' + (data.error || res.status)); return; }
+                // 서버 검증 통과 → 일비도 localStorage 에 저장 + 행 동기화
+                localStorage.setItem('MAK_PerDiemRates_v3', JSON.stringify(perDiemRates));
+                refreshRegionSelects();
+                reapplyPerDiemRates();
+                _perDiemSnapshot = null;  // 정상 저장 → 롤백 안 함
                 alert('✅ 저장 완료. 설정이 즉시 반영됩니다.');
                 document.getElementById('adminSettingsModal').classList.add('hidden-el');
                 await loadServerConfig();
@@ -2070,7 +2077,6 @@
             refreshRegionSelects();
         }
 
-        let isPerDiemEditMode = false;
         let _perDiemSnapshot = null;
 
         function _readModalInputsToRegion(regionKey) {
@@ -2092,15 +2098,6 @@
             if (selectedKey && perDiemRates[selectedKey]) sel.value = selectedKey;
         }
 
-        function _setPerDiemInputsDisabled(disabled) {
-            ['pd-region-name', 'pd-region-desc'].forEach(id => {
-                const el = document.getElementById(id); if (el) el.disabled = disabled;
-            });
-            PER_DIEM_RANKS.forEach(rk => {
-                const el = document.getElementById(`pd-${rk}-krw`); if (el) el.disabled = disabled;
-            });
-        }
-
         function loadPerDiemSettingsUI() {
             currentEditingRegion = document.getElementById('pd-region-select').value;
             const r = perDiemRates[currentEditingRegion];
@@ -2112,30 +2109,11 @@
             });
         }
 
-        function enterPerDiemEditMode() {
-            isPerDiemEditMode = true;
-            _setPerDiemInputsDisabled(false);
-            document.getElementById('pd-region-select').disabled = true;  // 편집 중 지역 변경 차단
-            document.getElementById('pd-view-actions').classList.add('hidden-el');
-            document.getElementById('pd-edit-actions').classList.remove('hidden-el');
-        }
-
-        function exitPerDiemEditMode(applyChanges) {
-            if (applyChanges && currentEditingRegion && perDiemRates[currentEditingRegion]) {
-                _readModalInputsToRegion(currentEditingRegion);
-                _populateRegionSelect(currentEditingRegion);  // 이름이 바뀌었을 수 있어 select 옵션 갱신
-            } else {
-                // 편집 취소 — 메모리 값으로 입력 복원
-                loadPerDiemSettingsUI();
-            }
-            isPerDiemEditMode = false;
-            _setPerDiemInputsDisabled(true);
-            document.getElementById('pd-region-select').disabled = false;
-            document.getElementById('pd-view-actions').classList.remove('hidden-el');
-            document.getElementById('pd-edit-actions').classList.add('hidden-el');
-        }
-
         function addPerDiemRegion() {
+            // 현재 편집 중 입력값 보존
+            if (currentEditingRegion && perDiemRates[currentEditingRegion]) {
+                _readModalInputsToRegion(currentEditingRegion);
+            }
             const name = (prompt('새 지역명을 입력하세요. (예: 동남아 지역)') || '').trim();
             if (!name) return;
             const desc = (prompt('지역 설명 (선택, 비워도 됨)') || '').trim();
@@ -2154,7 +2132,6 @@
             currentEditingRegion = newKey;
             _populateRegionSelect(newKey);
             loadPerDiemSettingsUI();
-            enterPerDiemEditMode();  // 신규 지역은 즉시 편집 모드 진입 (단가 입력 위해)
         }
 
         function deletePerDiemRegion() {
@@ -2164,7 +2141,7 @@
                 return;
             }
             const meta = perDiemRates[currentEditingRegion];
-            if (!confirm(`"${meta?.name || currentEditingRegion}" 지역을 삭제하시겠습니까?\n(저장하기를 눌러야 최종 반영됩니다.)`)) return;
+            if (!confirm(`"${meta?.name || currentEditingRegion}" 지역을 삭제하시겠습니까?\n(저장 버튼을 눌러야 최종 반영됩니다.)`)) return;
             delete perDiemRates[currentEditingRegion];
             const remaining = Object.keys(perDiemRates);
             currentEditingRegion = remaining[0];
@@ -2172,65 +2149,34 @@
             loadPerDiemSettingsUI();
         }
 
-        function openPerDiemSettings() {
-            // 모달 열기 시 현재 perDiemRates 스냅샷 — 닫기/취소 시 롤백 가능
-            _perDiemSnapshot = JSON.parse(JSON.stringify(perDiemRates));
-            isPerDiemEditMode = false;
-            _setPerDiemInputsDisabled(true);
-            document.getElementById('pd-region-select').disabled = false;
-            document.getElementById('pd-view-actions').classList.remove('hidden-el');
-            document.getElementById('pd-edit-actions').classList.add('hidden-el');
-            const firstKey = Object.keys(perDiemRates)[0] || 'A';
-            currentEditingRegion = firstKey;
-            _populateRegionSelect(firstKey);
-            loadPerDiemSettingsUI();
-            document.getElementById('pd-password').value = '';
-            document.getElementById('perDiemSettingsModal').classList.remove('hidden-el');
+        // ===== 일비 뷰어 모달 (해외 출장일비 섹션의 ⚙️ 버튼이 호출) =====
+        function loadPerDiemViewerUI() {
+            const sel = document.getElementById('pdv-region-select');
+            const key = sel.value;
+            const r = perDiemRates[key];
+            if (!r) return;
+            document.getElementById('pdv-name').innerText = r.name || '-';
+            document.getElementById('pdv-desc').innerText = r.desc || '-';
+            const ranksEl = document.getElementById('pdv-rates');
+            ranksEl.innerHTML = PER_DIEM_RANKS.map(rk => {
+                const v = r.rates[rk]?.krw ?? 0;
+                return `<div class="grid grid-cols-[70px_1fr] gap-1 text-sm bg-white border border-gray-200 rounded px-2 py-1.5">
+                    <div class="text-center font-bold text-gray-700">${RANK_LABELS[rk]}</div>
+                    <div class="text-right font-bold text-indigo-700">${(v || 0).toLocaleString()} 원</div>
+                </div>`;
+            }).join('');
         }
 
-        function closePerDiemSettings() {
-            // 저장하지 않고 닫기 → 메모리를 스냅샷으로 롤백 (추가/삭제/수정 모두 폐기)
-            if (_perDiemSnapshot) {
-                perDiemRates = _perDiemSnapshot;
-                _perDiemSnapshot = null;
-            }
-            isPerDiemEditMode = false;
-            document.getElementById('pd-password').value = '';
-            document.getElementById('perDiemSettingsModal').classList.add('hidden-el');
+        function openPerDiemViewer() {
+            const sel = document.getElementById('pdv-region-select');
+            const entries = Object.entries(perDiemRates);
+            sel.innerHTML = entries.map(([k, v]) => `<option value="${k}">${v.name || k}${v.desc ? ' — ' + v.desc : ''}</option>`).join('');
+            sel.value = entries.length ? entries[0][0] : '';
+            loadPerDiemViewerUI();
+            document.getElementById('perDiemViewerModal').classList.remove('hidden-el');
         }
-
-        async function savePerDiemSettings() {
-            const password = document.getElementById('pd-password').value;
-            if (!password) { alert('관리자 비밀번호를 입력해 주세요.'); return; }
-            // 서버에 비밀번호 검증 요청 (로컬 저장 전에 차단)
-            try {
-                const res = await fetch('/api/admin/verify-password', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
-                });
-                if (!res.ok) {
-                    const data = await res.json().catch(() => ({}));
-                    alert('저장 실패: ' + (data.error || '비밀번호 검증에 실패했습니다.'));
-                    return;
-                }
-            } catch (e) {
-                alert('네트워크 오류로 비밀번호 검증에 실패했습니다: ' + e.message);
-                return;
-            }
-            // 편집 모드라면 현재 입력값을 메모리에 먼저 반영
-            if (isPerDiemEditMode && currentEditingRegion && perDiemRates[currentEditingRegion]) {
-                _readModalInputsToRegion(currentEditingRegion);
-            }
-            localStorage.setItem('MAK_PerDiemRates_v3', JSON.stringify(perDiemRates));
-            // 행의 region select 옵션 + 사용 중인 단가 일괄 동기화
-            refreshRegionSelects();
-            reapplyPerDiemRates();
-            // 정상 저장 → 스냅샷 폐기 (롤백 안 함)
-            _perDiemSnapshot = null;
-            isPerDiemEditMode = false;
-            document.getElementById('pd-password').value = '';
-            document.getElementById('perDiemSettingsModal').classList.add('hidden-el');
-            alert('✅ 일비 기준액이 저장되었습니다.');
+        function closePerDiemViewer() {
+            document.getElementById('perDiemViewerModal').classList.add('hidden-el');
         }
 
         function autoSetPerDiem(el) {
@@ -2743,16 +2689,17 @@
         }
 
         function addTripRow() {
-            tripRowCount++; const tbody = document.getElementById('tripBody'); const tr = document.createElement('tr'); tr.id = `trip-row-${tripRowCount}`; const labelCell = document.getElementById('tripLabel'); labelCell.rowSpan = tripRowCount;
+            tripRowCount++; const tbody = document.getElementById('tripBody'); const tr = document.createElement('tr'); tr.id = `trip-row-${tripRowCount}`;
             tr.innerHTML = `<td class="p-1 border-r border-b text-center w-12 text-slate-400 text-[13px] bg-white font-bold">${tripRowCount}</td><td class="p-1 border-r border-b text-right w-32"><input type="text" id="tripAmt-${tripRowCount}" class="table-input text-right font-bold text-[#19736E] text-[13px] whitespace-nowrap" readonly value="0"></td><td class="p-1 border-r border-b text-center w-20 bg-slate-50 font-medium text-[13px] whitespace-nowrap">출장일수</td><td class="p-1 border-r border-b text-center w-12 bg-white"><input type="number" oninput="calcTripAllowance(${tripRowCount})" id="tripDays-${tripRowCount}" class="table-input text-center text-[13px] bg-white rounded border border-teal-100" placeholder=""></td><td class="p-1 border-r border-b text-center w-20 bg-slate-50 font-medium text-[13px] whitespace-nowrap">출장기간</td><td class="p-1 border-r border-b text-center bg-white"><div class="flex items-center justify-center gap-1"><input type="date" class="trip-start-date border border-teal-100 rounded text-[12px] px-1 py-0.5 bg-white outline-none" oninput="checkTripMealConflicts()"><span class="text-gray-400">~</span><input type="date" class="trip-end-date border border-teal-100 rounded text-[12px] px-1 py-0.5 bg-white outline-none" oninput="checkTripMealConflicts()"></div></td><td class="p-1 border-r border-b text-center w-16 bg-slate-50 font-medium text-[13px] whitespace-nowrap">출장지</td><td class="p-1 border-b text-center bg-white"><div contenteditable="true" class="editable-cell text-center text-[13px]" placeholder="출장지"></div></td><td class="p-1 border-b text-center no-print w-6 bg-white"><button onclick="removeTripRow(this)" class="text-red-300 hover:text-red-500 text-lg leading-none" title="행 삭제">×</button></td>`;
-            if(tripRowCount === 1) { const initialTr = tbody.querySelector('tr'); initialTr.innerHTML = labelCell.outerHTML + tr.innerHTML; } else { tbody.appendChild(tr); }
+            tbody.appendChild(tr);
             updateTotals();
         }
 
         function removeTripRow(btn) {
-            if(tripRowCount <= 1) return; const tr = btn.closest('tr');
-            if(tr.querySelector('#tripLabel')) { const nextTr = tr.nextElementSibling; if(nextTr) { const labelCell = document.getElementById('tripLabel'); nextTr.insertBefore(labelCell, nextTr.firstChild); } }
-            tr.remove(); tripRowCount--; document.getElementById('tripLabel').rowSpan = tripRowCount; calcTripAllowanceAll();
+            if(tripRowCount <= 1) return;
+            btn.closest('tr').remove();
+            tripRowCount--;
+            calcTripAllowanceAll();
         }
 
         function calcTripAllowance(idx) { const daysInp = document.getElementById(`tripDays-${idx}`); const amtInp = document.getElementById(`tripAmt-${idx}`); const days = parseInt(daysInp.value) || 0; amtInp.value = (days * 30000).toLocaleString(); calcTripAllowanceAll(); }
