@@ -289,6 +289,23 @@
         /* 행 영수증 액션 버튼 — data-receipt-file 속성 유무에 따라 자동 전환 */
         tr[data-receipt-file] .row-receipt-attach { display: none !important; }
         tr:not([data-receipt-file]) .row-receipt-preview { display: none !important; }
+
+        /* AI vs 수동 입력 행 구분 — 좌측 stripe + 옅은 배경 */
+        #tableBody tr[data-source="ai"], #overseasTableBody tr[data-source="ai"] {
+            background-color: rgba(99, 102, 241, 0.06) !important;
+        }
+        #tableBody tr[data-source="ai"] td:first-child,
+        #overseasTableBody tr[data-source="ai"] td:first-child {
+            box-shadow: inset 3px 0 0 #6366f1 !important;
+        }
+        #tableBody tr[data-source="manual"] td:first-child,
+        #overseasTableBody tr[data-source="manual"] td:first-child {
+            box-shadow: inset 3px 0 0 #cbd5e1 !important;
+        }
+        @media print {
+            #tableBody tr[data-source], #overseasTableBody tr[data-source] { background-color: white !important; }
+            #tableBody tr[data-source] td:first-child, #overseasTableBody tr[data-source] td:first-child { box-shadow: none !important; }
+        }
         @media print {
             /* 인쇄 시 출장기간 텍스트는 헤더(h2) 다음 줄에 작은 글씨로 노출 */
             #overseasTripPeriodPrint { font-size: 10px !important; font-weight: 600 !important; margin-left: 8px !important; }
@@ -1126,7 +1143,8 @@
                         seq: tr.querySelector('.val-seq').value,
                         memo: tr.querySelector('.memo-input').innerText,
                         headcount: parseInt(tr.getAttribute('data-headcount')) || 1,
-                        nights: parseInt(tr.getAttribute('data-nights')) || 1
+                        nights: parseInt(tr.getAttribute('data-nights')) || 1,
+                        source: tr.getAttribute('data-source') || 'manual'
                     };
                     data.rows.push(rowData);
                 });
@@ -1142,7 +1160,8 @@
                         curr: tr.querySelector('.ovs-curr').value,
                         rate: tr.querySelector('.ovs-rate').value,
                         seq: tr.querySelector('.ovs-seq').value,
-                        memo: tr.querySelector('.ovs-memo-input').innerText
+                        memo: tr.querySelector('.ovs-memo-input').innerText,
+                        source: tr.getAttribute('data-source') || 'manual'
                     };
                     data.rows.push(rowData);
                 });
@@ -1185,6 +1204,8 @@
                         tr.setAttribute('data-day', row.day || 99);
                         tr.setAttribute('data-headcount', hc);
                         tr.setAttribute('data-nights', nt);
+                        tr.setAttribute('data-source', row.source || 'manual');
+                        tr.title = (row.source === 'ai') ? 'AI 분석 영수증' : '수동 입력 행';
                         tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${yVal}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${row.month}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${row.day}" onchange="updateSortAttributes(this)"></td>${row.costs.map((v, idx) => {
                             const i = idx + 1;
                             const overMeal = i === 1 && isOverMealLimit(unformatComma(v), hc);
@@ -1212,6 +1233,8 @@
                         tr.setAttribute('data-year', yVal);
                         tr.setAttribute('data-month', row.month || 99);
                         tr.setAttribute('data-day', row.day || 99);
+                        tr.setAttribute('data-source', row.source || 'manual');
+                        tr.title = (row.source === 'ai') ? 'AI 분석 영수증' : '수동 입력 행';
                         let catInputs = '';
                         row.costs.forEach((val, idx) => {
                             const i = idx + 1;
@@ -1369,6 +1392,26 @@
             if (domesticTotal === 0 && overseasTotal === 0) {
                 alert("정산할 금액이 없습니다. 항목을 입력한 뒤 다시 시도해 주세요.");
                 return;
+            }
+            // 해외에 외화 항목이 있는데 환율이 누락된 행 검사 — 평균 환율 일괄 연동 필수
+            if (overseasTotal !== 0) {
+                const missing = [];
+                document.querySelectorAll('#overseasTableBody tr').forEach((row, idx) => {
+                    const hasCost = Array.from(row.querySelectorAll('.ovs-cost-input')).some(i => unformatComma(i.value) > 0);
+                    if (!hasCost) return;
+                    const curr = (row.querySelector('.ovs-curr')?.value || '').trim().toUpperCase();
+                    if (!curr || curr === 'KRW' || curr === '원' || curr === '원화') return;
+                    const rate = unformatComma(row.querySelector('.ovs-rate')?.value || '0');
+                    if (rate <= 0) {
+                        const m = row.querySelector('.val-month')?.value || '?';
+                        const d = row.querySelector('.val-day')?.value || '?';
+                        missing.push(`${idx + 1}번째 행 (${m}/${d}, ${curr})`);
+                    }
+                });
+                if (missing.length > 0) {
+                    alert(`❌ 인쇄할 수 없습니다.\n\n해외 항목 ${missing.length}건에 환율이 적용되지 않았습니다:\n• ${missing.slice(0, 5).join('\n• ')}${missing.length > 5 ? `\n외 ${missing.length - 5}건` : ''}\n\n해외 탭에서 [평균 환율 일괄 연동] 버튼을 눌러 모든 환율을 적용한 뒤 다시 인쇄해 주세요.`);
+                    return;
+                }
             }
             markEmptyRows();
             const domView = document.getElementById('domesticView');
@@ -2684,6 +2727,8 @@
             tr.setAttribute('data-year', y); tr.setAttribute('data-month', m || 99); tr.setAttribute('data-day', d || 99);
             tr.setAttribute('data-headcount', pre?.headcount || 1);
             tr.setAttribute('data-nights', pre?.nights || 1);
+            tr.setAttribute('data-source', 'manual');
+            tr.title = '수동 입력 행';
             tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${y}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateSortAttributes(this)"></td>${[1,2,3,4,5,6,7,8,9].map(i => {
                 const v = (pre && pre.col === i) ? formattedAmt : "";
                 const overMeal = i === 1 && isOverMealLimit(unformatComma(v), pre?.headcount);
@@ -2792,6 +2837,8 @@
             tr.setAttribute('data-day', res.day || 99);
             tr.setAttribute('data-headcount', peopleCount || 1);
             tr.setAttribute('data-nights', res.nights || 1);
+            tr.setAttribute('data-source', 'ai');
+            tr.title = 'AI 분석 영수증';
             if (res.merchant) tr.setAttribute('data-merchant', res.merchant);
             if (res.categoryIndex) tr.setAttribute('data-ai-category', res.categoryIndex);
             if (key) tr.setAttribute('data-receipt-key', key);
@@ -2888,6 +2935,8 @@
             tr.setAttribute('data-year', y); tr.setAttribute('data-month', m || 99); tr.setAttribute('data-day', d || 99);
             tr.setAttribute('data-headcount', pre?.headcount || 1);
             tr.setAttribute('data-nights', pre?.nights || 1);
+            tr.setAttribute('data-source', pre ? 'ai' : 'manual');
+            tr.title = pre ? 'AI 분석 영수증' : '수동 입력 행';
             if (pre?.sourceFile) tr.setAttribute('data-receipt-file', pre.sourceFile);
             let catInputs = '';
             for(let i=1; i<=9; i++) {
