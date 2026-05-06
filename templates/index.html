@@ -471,6 +471,21 @@
         </div>
     </div>
 
+    <!-- 영수증 미리보기 모달 -->
+    <div id="receiptPreviewModal" class="hidden-el fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center no-print backdrop-blur-sm" onclick="if(event.target===this) closeReceiptPreview()">
+        <div class="bg-white p-4 rounded-xl shadow-2xl w-full max-w-3xl mx-4 border-t-8 border-blue-500 max-h-[92vh] flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-black text-blue-900 flex items-center shrink-0"><span class="mr-2">📎</span> 영수증 미리보기</h3>
+                <span id="receiptPreviewName" class="text-xs text-gray-500 truncate ml-3 flex-1 text-right"></span>
+                <button onclick="closeReceiptPreview()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none ml-3 shrink-0">×</button>
+            </div>
+            <div id="receiptPreviewBody" class="flex-1 overflow-auto bg-gray-50 rounded border border-gray-200 flex items-center justify-center min-h-[400px]"></div>
+            <div class="flex gap-2 mt-3">
+                <button onclick="closeReceiptPreview()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition font-bold text-sm">닫기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- AI 처리 오버레이 -->
     <div id="processingOverlay" class="hidden-el fixed inset-0 bg-black bg-opacity-60 z-40 flex items-center justify-center no-print backdrop-blur-sm">
         <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full mx-4 border-t-8 border-blue-600">
@@ -1341,6 +1356,52 @@
                 if (p.carNumber) set('carNumber', p.carNumber);
             } catch(e) {}
         }
+        // ===== 영수증 미리보기 (행별) =====
+        function previewReceipt(btn) {
+            const tr = btn.closest('tr');
+            const fname = tr?.getAttribute('data-receipt-file');
+            const modal = document.getElementById('receiptPreviewModal');
+            const nameEl = document.getElementById('receiptPreviewName');
+            const body = document.getElementById('receiptPreviewBody');
+            nameEl.innerText = fname || '';
+            body.innerHTML = '';
+            if (window._receiptPreviewURL) { URL.revokeObjectURL(window._receiptPreviewURL); window._receiptPreviewURL = null; }
+            if (!fname) return;
+            const entry = (window.uploadedReceiptFiles || []).find(e => e.name === fname);
+            if (!entry || !entry.blob) {
+                body.innerHTML = `<div class="text-center text-gray-500 p-8">
+                    <p class="text-sm font-bold mb-2">⚠ 원본 파일을 찾을 수 없습니다</p>
+                    <p class="text-xs">파일명: ${fname}</p>
+                    <p class="text-xs mt-3 leading-relaxed">새로고침 또는 저장본 불러오기 후엔 미리보기가 불가능합니다.<br>해당 영수증을 다시 업로드하면 미리보기가 가능해집니다.</p>
+                </div>`;
+                modal.classList.remove('hidden-el');
+                return;
+            }
+            const url = URL.createObjectURL(entry.blob);
+            window._receiptPreviewURL = url;
+            const type = entry.blob.type || '';
+            const lower = fname.toLowerCase();
+            if (type === 'application/pdf' || lower.endsWith('.pdf')) {
+                body.innerHTML = `<iframe src="${url}" class="w-full" style="height:75vh; border:0;"></iframe>`;
+            } else if (type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp)$/i.test(lower)) {
+                body.innerHTML = `<img src="${url}" class="max-w-full max-h-[75vh] object-contain" alt="${fname}">`;
+            } else {
+                body.innerHTML = `<div class="text-center text-gray-500 p-8">
+                    <p class="text-sm font-bold mb-2">미리보기를 지원하지 않는 형식입니다</p>
+                    <p class="text-xs">파일명: ${fname}</p>
+                    <a href="${url}" download="${fname}" class="inline-block mt-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded">다운로드</a>
+                </div>`;
+            }
+            modal.classList.remove('hidden-el');
+        }
+
+        function closeReceiptPreview() {
+            const modal = document.getElementById('receiptPreviewModal');
+            modal.classList.add('hidden-el');
+            document.getElementById('receiptPreviewBody').innerHTML = '';
+            if (window._receiptPreviewURL) { URL.revokeObjectURL(window._receiptPreviewURL); window._receiptPreviewURL = null; }
+        }
+
         // ===== 증빙 영수증 PDF 병합 다운로드 =====
         async function mergeReceiptsPDF() {
             const allFiles = (window.uploadedReceiptFiles || []);
@@ -2541,7 +2602,7 @@
                 const capAttr = (i === 1) ? ' onblur="applyMealCapOnInput(this)"' : (i === 5 ? ' onblur="applyLodgingCapOnInput(this)"' : '');
                 const dblClick = (i === 6) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                 return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();"${capAttr}${dblClick} class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
-            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print text-center"><button onclick="deleteRow(this)" class="text-red-300 hover:text-red-500">×</button></td>`;
+            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print text-center whitespace-nowrap"><button onclick="previewReceipt(this)" class="text-blue-400 hover:text-blue-600 mr-1" title="영수증 보기">📎</button><button onclick="deleteRow(this)" class="text-red-300 hover:text-red-500">×</button></td>`;
             tbody.appendChild(tr);
             updateTotals();
         }
@@ -2607,7 +2668,7 @@
                 const dblClick = (i === 4) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                 catInputs += `<td class="border-r"><input type="text" class="table-input ovs-cat-${i} ovs-cost-input text-right text-gray-700" value="${val}" oninput="formatComma(this, true); calcOvsRow(this);" onblur="formatAmount2Decimals(this); calcOvsRow(this);"${dblClick} placeholder=""></td>`;
             }
-            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateOvsSortAttributes(this)"></td>${catInputs}<td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${curr}" placeholder="USD" onchange="autoFetchRate(this, false)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" oninput="formatComma(this, true); calcOvsRow(this);" placeholder=""><button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td><td class="border-r"><input type="text" class="table-input ovs-seq" placeholder="번호"></td><td class="relative"><div contenteditable="true" class="editable-cell ovs-memo-input pr-10" placeholder="적요">${memo || ''}</div>${pre ? `<button onclick="this.closest('tr').classList.remove('row-ai-pending'); this.remove();" class="no-print absolute right-1 top-1/2 -translate-y-1/2 bg-amber-500 text-white text-[9px] px-1 py-0.5 rounded shadow">확인</button>` : ''}</td><td class="no-print text-center"><button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-300 hover:text-red-500">×</button></td>`;
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateOvsSortAttributes(this)"></td>${catInputs}<td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${curr}" placeholder="USD" onchange="autoFetchRate(this, false)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" oninput="formatComma(this, true); calcOvsRow(this);" placeholder=""><button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td><td class="border-r"><input type="text" class="table-input ovs-seq" placeholder="번호"></td><td class="relative"><div contenteditable="true" class="editable-cell ovs-memo-input pr-10" placeholder="적요">${memo || ''}</div>${pre ? `<button onclick="this.closest('tr').classList.remove('row-ai-pending'); this.remove();" class="no-print absolute right-1 top-1/2 -translate-y-1/2 bg-amber-500 text-white text-[9px] px-1 py-0.5 rounded shadow">확인</button>` : ''}</td><td class="no-print text-center whitespace-nowrap">${pre?.sourceFile ? `<button onclick="previewReceipt(this)" class="text-blue-400 hover:text-blue-600 mr-1" title="영수증 보기">📎</button>` : ''}<button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-300 hover:text-red-500">×</button></td>`;
             if (pre) tr.classList.add('row-ai-pending');
             tbody.appendChild(tr); reIndexOverseasRows(); if (pre && curr) autoFetchRate(tr.querySelector('.ovs-rate').nextElementSibling, false, true); 
         }
