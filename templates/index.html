@@ -162,7 +162,6 @@
         .loader-small { border: 2px solid #e0e7ff; border-top: 2px solid #4f46e5; border-radius: 50%; width: 14px; height: 14px; animation: spinner 1s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .row-ai-pending { background-color: #f8fafc; border-left: 4px solid #f59e0b !important; }
         .trip-table { border: 1px solid #b7e0dd; }
         .trip-table td { border-color: #b7e0dd; }
         .fuel-content { transition: all 0.2s ease-out; overflow: hidden; }
@@ -2136,7 +2135,7 @@
                                 if (existingReceipts.has(key)) { updateExistingRow(res, peopleCount, key); }
                                 else { existingReceipts.add(key); addAIResultRow(res, peopleCount, key); }
                             } else {
-                                addOverseasRow({ month: res.month, day: res.day, categoryIndex: res.categoryIndex, currency: res.currency, amount: res.amount, memo: `[AI] ${res.merchant || ''}`, headcount: peopleCount, nights: nights, sourceFile: file.name });
+                                addOverseasRow({ year: res.year, month: res.month, day: res.day, categoryIndex: res.categoryIndex, currency: res.currency, amount: res.amount, memo: `${peopleCount > 1 ? `[${peopleCount}명] ` : ''}${res.categoryIndex === 3 && nights > 1 ? `[${nights}박] ` : ''}${res.merchant || ''}`, headcount: peopleCount, nights: nights, sourceFile: file.name });
                             }
                         }
                     }
@@ -2222,20 +2221,21 @@
         };
 
         function parseServerDate(dateStr) {
-            if (!dateStr) return { month: 0, day: 0 };
+            if (!dateStr) return { year: 0, month: 0, day: 0 };
             const m = String(dateStr).match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
-            if (!m) return { month: 0, day: 0 };
-            return { month: parseInt(m[2]), day: parseInt(m[3]) };
+            if (!m) return { year: 0, month: 0, day: 0 };
+            return { year: parseInt(m[1]), month: parseInt(m[2]), day: parseInt(m[3]) };
         }
 
         function convertServerReceipt(r) {
             if (r.error) return null;
-            const { month, day } = parseServerDate(r.date);
+            const { year, month, day } = parseServerDate(r.date);
             const amount = Math.abs(parseInt(r.total) || 0);
             const merchant = r.store_name || 'Unknown';
             const map = activeTab === 'overseas' ? OVERSEAS_CATEGORY_TO_INDEX : DOMESTIC_CATEGORY_TO_INDEX;
             const categoryIndex = map[r.category] || (activeTab === 'overseas' ? 8 : 9);
             const out = { month, day, amount, merchant, categoryIndex };
+            if (year > 0) out.year = String(year);
             if (r.headcount && parseInt(r.headcount) > 0) out.headcount = parseInt(r.headcount);
             if (r.nights && parseInt(r.nights) > 0) out.nights = parseInt(r.nights);
             if (activeTab === 'overseas') out.currency = (r.currency || 'USD').toUpperCase();
@@ -2716,9 +2716,8 @@
                 const dblClick = (i === 4) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                 catInputs += `<td class="border-r"><input type="text" class="table-input ovs-cat-${i} ovs-cost-input text-right text-gray-700" value="${val}" oninput="formatComma(this, true); calcOvsRow(this);" onblur="formatAmount2Decimals(this); calcOvsRow(this);"${dblClick} placeholder=""></td>`;
             }
-            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${y}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateOvsSortAttributes(this)"></td>${catInputs}<td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${curr}" placeholder="USD" onchange="autoFetchRate(this, false)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" oninput="formatComma(this, true); calcOvsRow(this);" placeholder=""><button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td><td class="border-r"><input type="text" class="table-input ovs-seq" placeholder="번호"></td><td class="relative"><div contenteditable="true" class="editable-cell ovs-memo-input pr-10" placeholder="적요">${memo || ''}</div>${pre ? `<button onclick="this.closest('tr').classList.remove('row-ai-pending'); this.remove();" class="no-print absolute right-1 top-1/2 -translate-y-1/2 bg-amber-500 text-white text-[9px] px-1 py-0.5 rounded shadow">확인</button>` : ''}</td><td class="no-print"><div class="flex items-center justify-center gap-1">${pre?.sourceFile ? `<button onclick="previewReceipt(this)" class="text-blue-500 hover:text-blue-700 shrink-0" title="영수증 보기"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></button>` : ''}<button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
-            if (pre) tr.classList.add('row-ai-pending');
-            tbody.appendChild(tr); reIndexOverseasRows(); if (pre && curr) autoFetchRate(tr.querySelector('.ovs-rate').nextElementSibling, false, true); 
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${y}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateOvsSortAttributes(this)"></td>${catInputs}<td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${curr}" placeholder="USD" onchange="autoFetchRate(this, false)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" oninput="formatComma(this, true); calcOvsRow(this);" placeholder=""><button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td><td class="border-r"><input type="text" class="table-input ovs-seq" placeholder="번호"></td><td><div contenteditable="true" class="editable-cell ovs-memo-input" placeholder="적요">${memo || ''}</div></td><td class="no-print"><div class="flex items-center justify-center gap-1">${pre?.sourceFile ? `<button onclick="previewReceipt(this)" class="text-blue-500 hover:text-blue-700 shrink-0" title="영수증 보기"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></button>` : ''}<button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
+            tbody.appendChild(tr); reIndexOverseasRows(); if (pre && curr) autoFetchRate(tr.querySelector('.ovs-rate').nextElementSibling, false, true);
         }
 
         // 환율 출처: 서울외국환중개(smbs.biz) 매매기준율. JPY는 서버에서 1엔 기준으로 환산됨.
