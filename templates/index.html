@@ -286,6 +286,9 @@
             .landscape-header { display: none !important; }
             .print-only-tab { display: none !important; }
         }
+        /* 행 영수증 액션 버튼 — data-receipt-file 속성 유무에 따라 자동 전환 */
+        tr[data-receipt-file] .row-receipt-attach { display: none !important; }
+        tr:not([data-receipt-file]) .row-receipt-preview { display: none !important; }
         @media print {
             /* 인쇄 시 출장기간 텍스트는 헤더(h2) 다음 줄에 작은 글씨로 노출 */
             #overseasTripPeriodPrint { font-size: 10px !important; font-weight: 600 !important; margin-left: 8px !important; }
@@ -1190,7 +1193,7 @@
                             const capAttr = (i === 1) ? ' onblur="applyMealCapOnInput(this)"' : (i === 5 ? ' onblur="applyLodgingCapOnInput(this)"' : '');
                             const dblClick = (i === 6) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                             return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();"${capAttr}${dblClick} class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
-                        }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" value="${row.seq || ''}" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${row.memo}</div></td><td class="no-print"><div class="flex items-center justify-center gap-1"><button onclick="deleteRow(this)" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
+                        }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" value="${row.seq || ''}" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${row.memo}</div></td>${rowActionCellHTML('deleteRow(this)')}`;
                         tbody.appendChild(tr);
                     });
                 } else {
@@ -1230,7 +1233,7 @@
                             <td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td>
                             <td class="border-r"><input type="text" class="table-input ovs-seq" value="${row.seq || ''}" placeholder="번호"></td>
                             <td class="relative"><div contenteditable="true" class="editable-cell ovs-memo-input pr-10" placeholder="적요">${row.memo}</div></td>
-                            <td class="no-print"><div class="flex items-center justify-center gap-1"><button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>
+                            ${rowActionCellHTML(`this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();`)}
                         `;
                         tbody.appendChild(tr);
                         calcOvsRow(tr.querySelector('.ovs-rate'));
@@ -1425,6 +1428,45 @@
                 if (p.carNumber) set('carNumber', p.carNumber);
             } catch(e) {}
         }
+        // ===== 행 액션 셀 공통 마크업 (첨부/미리보기 + 삭제) =====
+        // delHandler: 삭제 onclick 식 문자열 (행마다 다른 후처리)
+        function rowActionCellHTML(delHandler) {
+            const paperclipSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>`;
+            return `<td class="no-print"><div class="flex items-center justify-center gap-1">`
+                + `<button type="button" onclick="attachReceiptToRow(this)" class="row-receipt-attach text-gray-400 hover:text-blue-500 shrink-0" title="영수증 첨부">${paperclipSvg}</button>`
+                + `<button type="button" onclick="previewReceipt(this)" class="row-receipt-preview text-blue-500 hover:text-blue-700 shrink-0" title="영수증 보기">${paperclipSvg}</button>`
+                + `<button type="button" onclick="${delHandler}" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button>`
+                + `</div></td>`;
+        }
+
+        // ===== 행에 영수증 수동 첨부 (AI 인식 실패 시 또는 수기 행에 첨부) =====
+        function attachReceiptToRow(btn) {
+            const tr = btn.closest('tr');
+            if (!tr) return;
+            const inp = document.createElement('input');
+            inp.type = 'file';
+            inp.accept = 'image/*,application/pdf';
+            inp.onchange = (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                window.uploadedReceiptFiles = window.uploadedReceiptFiles || [];
+                // 같은 파일명이 이미 있으면 _1, _2 ... 접미사로 충돌 회피
+                let name = file.name;
+                const existing = window.uploadedReceiptFiles.map(en => en.name);
+                if (existing.includes(name)) {
+                    const m = name.match(/^(.*?)(\.[^.]+)?$/);
+                    const base = m[1] || name; const ext = m[2] || '';
+                    let n = 1;
+                    while (existing.includes(`${base}_${n}${ext}`)) n++;
+                    name = `${base}_${n}${ext}`;
+                }
+                window.uploadedReceiptFiles.push({ name, blob: file });
+                tr.setAttribute('data-receipt-file', name);
+                // CSS 가 자동으로 첨부 버튼 → 미리보기 버튼으로 전환
+            };
+            inp.click();
+        }
+
         // ===== 영수증 미리보기 (행별) =====
         function previewReceipt(btn) {
             const tr = btn.closest('tr');
@@ -2650,7 +2692,7 @@
                 const capAttr = (i === 1) ? ' onblur="applyMealCapOnInput(this)"' : (i === 5 ? ' onblur="applyLodgingCapOnInput(this)"' : '');
                 const dblClick = (i === 6) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                 return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();"${capAttr}${dblClick} class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
-            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print"><div class="flex items-center justify-center gap-1"><button onclick="deleteRow(this)" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
+            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td>${rowActionCellHTML('deleteRow(this)')}`;
             tbody.appendChild(tr); reIndexRows(); updateTotals();
         }
 
@@ -2777,7 +2819,7 @@
                 const capAttr = (i === 1) ? ' onblur="applyMealCapOnInput(this)"' : (i === 5 ? ' onblur="applyLodgingCapOnInput(this)"' : '');
                 const dblClick = (i === 6) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                 return `<td class="border-r"><input type="text" oninput="formatComma(this); updateTotals();"${capAttr}${dblClick} class="table-input cost-input col-${i} ${cls} text-right" value="${v}"></td>`;
-            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td><td class="no-print"><div class="flex items-center justify-center gap-1"><button onclick="previewReceipt(this)" class="text-blue-500 hover:text-blue-700 shrink-0" title="영수증 보기"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></button><button onclick="deleteRow(this)" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
+            }).join('')}<td class="border-r"><input type="text" class="table-input val-seq" placeholder="번호"></td><td class=""><div contenteditable="true" class="editable-cell memo-input" placeholder="적요">${memo}</div></td>${rowActionCellHTML('deleteRow(this)')}`;
             tbody.appendChild(tr);
             updateTotals();
         }
@@ -2859,7 +2901,7 @@
                 const dblClick = (i === 4) ? ` ondblclick="openEntertainmentModal(this.closest('tr'))" title="더블클릭 → 접대비 상세 입력"` : '';
                 catInputs += `<td class="border-r"><input type="text" class="table-input ovs-cat-${i} ovs-cost-input text-right text-gray-700" value="${val}" oninput="formatComma(this, true); calcOvsRow(this);" onblur="formatAmount2Decimals(this); calcOvsRow(this);"${dblClick} placeholder=""></td>`;
             }
-            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${y}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateOvsSortAttributes(this)"></td>${catInputs}<td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${curr}" placeholder="USD" onchange="autoFetchRate(this, false)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" oninput="formatComma(this, true); calcOvsRow(this);" placeholder=""><button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td><td class="border-r"><input type="text" class="table-input ovs-seq" placeholder="번호"></td><td><div contenteditable="true" class="editable-cell ovs-memo-input" placeholder="적요">${memo || ''}</div></td><td class="no-print"><div class="flex items-center justify-center gap-1">${pre?.sourceFile ? `<button onclick="previewReceipt(this)" class="text-blue-500 hover:text-blue-700 shrink-0" title="영수증 보기"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></button>` : ''}<button onclick="this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
+            tr.innerHTML = `<td class="border-r"><input type="number" class="table-input val-year" value="${y}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-month" value="${m}" onchange="updateOvsSortAttributes(this)"></td><td class="border-r"><input type="number" class="table-input val-day" value="${d}" onchange="updateOvsSortAttributes(this)"></td>${catInputs}<td class="border-r"><input type="text" class="table-input ovs-curr uppercase font-bold text-gray-600" value="${curr}" placeholder="USD" onchange="autoFetchRate(this, false)"></td><td class="border-r bg-indigo-50/30 relative"><input type="text" class="table-input ovs-rate text-right text-indigo-700 font-bold pr-6" oninput="formatComma(this, true); calcOvsRow(this);" placeholder=""><button onclick="autoFetchRate(this)" class="absolute right-1 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 no-print transition-colors" title="실시간 환율 불러오기"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button></td><td class="border-r bg-blue-50/50"><input type="text" class="table-input ovs-krw-amt text-right font-bold text-blue-900" readonly value="" placeholder=""></td><td class="border-r"><input type="text" class="table-input ovs-seq" placeholder="번호"></td><td><div contenteditable="true" class="editable-cell ovs-memo-input" placeholder="적요">${memo || ''}</div></td>${rowActionCellHTML(`this.closest('tr').remove(); updateOverseasTotals(); reIndexOverseasRows();`)}`;
             tbody.appendChild(tr); reIndexOverseasRows(); if (pre && curr) autoFetchRate(tr.querySelector('.ovs-rate').nextElementSibling, false, true);
         }
 
