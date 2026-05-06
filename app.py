@@ -38,10 +38,8 @@ from image_preprocessor import preprocess_image
 from receipt_processor import ReceiptProcessor, AllModelsFailedError
 from exchange_rate import fetch_rates, fetch_latest
 # 유가는 이제 관리자 설정값(settings.json)에 직접 저장 · KNOC 외부 연동 제거
-from excel_export import build_workbook as _build_xlsx
 from settings_store import get_settings, save_settings, ADMIN_PASSWORD
 import category_learner
-from datetime import date as _date
 
 
 def pdf_to_images(pdf_bytes: bytes) -> list[bytes]:
@@ -192,26 +190,6 @@ def create_app(testing=False):
         if body.get("password") != ADMIN_PASSWORD:
             return jsonify({"ok": False, "error": "비밀번호가 올바르지 않습니다."}), 401
         return jsonify({"ok": True})
-
-    @app.route("/api/export-excel", methods=["POST"])
-    def api_export_excel():
-        """현재 정산 상태를 엑셀(.xlsx)로 변환."""
-        from flask import Response
-        data = request.get_json(silent=True) or {}
-        try:
-            xlsx_bytes = _build_xlsx(data)
-        except Exception as e:
-            return jsonify({"error": f"엑셀 생성 실패: {e}"}), 500
-        name = (data.get("common") or {}).get("userName") or "expense"
-        filename = f"{name}_경비정산_{_date.today().isoformat()}.xlsx"
-        # ASCII-safe 파일명 인코딩
-        import urllib.parse
-        safe = urllib.parse.quote(filename)
-        return Response(
-            xlsx_bytes,
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{safe}"},
-        )
 
     @app.route("/api/fuel-price", methods=["GET"])
     def api_fuel_price():

@@ -656,23 +656,20 @@
             </div>
             
             <div class="flex space-x-2 pb-2">
+                <button onclick="clearUserProfile()" class="bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm" title="브라우저에 저장된 성명·부서·차량 정보 초기화">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> 프로필 초기화
+                </button>
                 <button onclick="saveTempData()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg> 임시저장
                 </button>
                 <button onclick="loadTempData()" class="bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> 불러오기
                 </button>
-                <button id="mergePdfBtn" onclick="mergeReceiptsPDF()" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm" title="업로드한 영수증 원본을 하나의 PDF로 병합 다운로드">
+                <button id="mergePdfBtn" onclick="mergeReceiptsPDF()" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm" title="현재 탭에 반영된 영수증 원본을 하나의 PDF로 병합 다운로드">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg> 증빙PDF
-                </button>
-                <button onclick="exportToExcel()" class="bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm" title="회계 ERP 업로드용 엑셀 다운로드">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V3m0 0l-4 4m4-4l4 4"/></svg> 엑셀
                 </button>
                 <button onclick="runValidation()" class="bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm" title="제출 전 규정 검증">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> 검증
-                </button>
-                <button onclick="clearUserProfile()" class="bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm" title="저장된 개인 프로필 삭제">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 </button>
                 <button onclick="openAdminSettings()" class="bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm" title="관리자 설정 (한도 · 정책)">
                     ⚙️ 설정
@@ -1665,20 +1662,21 @@
             if (window._receiptPreviewURL) { URL.revokeObjectURL(window._receiptPreviewURL); window._receiptPreviewURL = null; }
         }
 
-        // ===== 증빙 영수증 PDF 병합 다운로드 =====
+        // ===== 증빙 영수증 PDF 병합 다운로드 (현재 활성 탭 기준) =====
         async function mergeReceiptsPDF() {
             const allFiles = (window.uploadedReceiptFiles || []);
+            const tabLabel = activeTab === 'overseas' ? '해외' : '국내';
+            const tbodyId = activeTab === 'overseas' ? 'overseasTableBody' : 'tableBody';
             if (allFiles.length === 0) {
-                alert('업로드된 영수증이 없습니다. 먼저 영수증을 업로드해 주세요.');
+                alert(`업로드된 영수증이 없습니다. ${tabLabel} 탭에서 먼저 영수증을 업로드해 주세요.`);
                 return;
             }
-            // 버튼 클릭 시점 기준: 현재 표에 살아있는 행의 영수증 파일만 포함 (삭제된 행은 제외)
+            // 현재 탭 표에 반영된 영수증만 포함 (삭제된 행은 제외)
             const activeFileNames = new Set();
-            document.querySelectorAll('#tableBody tr[data-receipt-file], #overseasTableBody tr[data-receipt-file]').forEach(tr => {
+            document.querySelectorAll(`#${tbodyId} tr[data-receipt-file]`).forEach(tr => {
                 const f = tr.getAttribute('data-receipt-file');
                 if (f) activeFileNames.add(f);
             });
-            // 같은 파일이 여러 번 업로드된 경우 첫 번째 항목만 사용 (이름 기준 dedupe)
             const seen = new Set();
             const files = allFiles.filter(entry => {
                 if (!activeFileNames.has(entry.name)) return false;
@@ -1687,7 +1685,7 @@
                 return true;
             });
             if (files.length === 0) {
-                alert('현재 표에 반영된 영수증이 없습니다. (삭제된 영수증은 PDF에 포함되지 않습니다)');
+                alert(`현재 ${tabLabel} 탭에 반영된 영수증이 없습니다.\n(다른 탭의 영수증은 해당 탭에서 PDF 추출하세요)`);
                 return;
             }
             if (!window.PDFLib) {
@@ -1721,7 +1719,7 @@
                 const today = new Date().toISOString().slice(0,10);
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = `${name}_증빙영수증_${today}.pdf`;
+                a.download = `${name}_${tabLabel}_증빙영수증_${today}.pdf`;
                 document.body.appendChild(a); a.click();
                 setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 100);
             } catch (e) {
@@ -1841,58 +1839,6 @@
             }
             box.innerHTML = html;
             document.getElementById('validationModal').classList.remove('hidden-el');
-        }
-
-        // ===== 엑셀 내보내기 (국내/해외 모두 지원) =====
-        async function exportToExcel() {
-            const common = typeof collectCommonState === 'function' ? collectCommonState() : {};
-            const payload = { common, tab: activeTab };
-            if (activeTab === 'domestic') {
-                const rows = [];
-                document.querySelectorAll('#tableBody tr').forEach(tr => {
-                    rows.push({
-                        month: tr.querySelector('.val-month')?.value || '',
-                        day: tr.querySelector('.val-day')?.value || '',
-                        costs: Array.from(tr.querySelectorAll('.cost-input')).map(i => i.value),
-                        memo: tr.querySelector('.memo-input')?.innerText || '',
-                        headcount: parseInt(tr.getAttribute('data-headcount')) || 1,
-                        nights: parseInt(tr.getAttribute('data-nights')) || 1,
-                    });
-                });
-                payload.rows = rows;
-            } else {
-                const rows = [];
-                document.querySelectorAll('#overseasTableBody tr').forEach(tr => {
-                    rows.push({
-                        month: tr.querySelector('.val-month')?.value || '',
-                        day: tr.querySelector('.val-day')?.value || '',
-                        costs: Array.from(tr.querySelectorAll('.ovs-cost-input')).map(i => i.value),
-                        currency: tr.querySelector('.ovs-curr')?.value || '',
-                        rate: tr.querySelector('.ovs-rate')?.value || '',
-                        krwAmt: tr.querySelector('.ovs-krw-amt')?.value || '',
-                        memo: tr.querySelector('.ovs-memo-input')?.innerText || '',
-                    });
-                });
-                payload.rows = rows;
-            }
-            try {
-                const res = await fetch('/api/export-excel', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-                if (!res.ok) { const err = await res.json().catch(()=>({})); alert('엑셀 생성 실패: ' + (err.error || res.status)); return; }
-                const blob = await res.blob();
-                const disp = res.headers.get('Content-Disposition') || '';
-                const m = disp.match(/filename\*=UTF-8''([^;]+)/);
-                const name = m ? decodeURIComponent(m[1]) : 'expense.xlsx';
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = name; document.body.appendChild(a); a.click();
-                setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
-            } catch(e) {
-                alert('네트워크 오류: ' + e.message);
-            }
         }
 
         function clearUserProfile() {
