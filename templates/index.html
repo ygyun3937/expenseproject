@@ -348,17 +348,27 @@
             tr[data-source="ai"] .ovs-memo-input::before { display: none !important; }
             tr[data-source="ai"] .memo-input,
             tr[data-source="ai"] .ovs-memo-input { padding-left: 2px !important; }
-            /* 수기 행 배지: 인쇄에도 유지 — 검정 배경+굵은 흰 글씨로 가독성 강화 */
-            tr[data-source="manual"] .memo-input,
-            tr[data-source="manual"] .ovs-memo-input { padding-left: 32px !important; }
+            /* 수기 행: 좌측 배지 숨김 → 비고 셀 우측(영수증 아이콘 위치)에 배지 노출 */
             tr[data-source="manual"] .memo-input::before,
-            tr[data-source="manual"] .ovs-memo-input::before {
-                background: #111827 !important;
-                color: white !important;
-                font-size: 9px !important;
-                font-weight: 800 !important;
-                padding: 1px 4px !important;
-                box-shadow: none !important;
+            tr[data-source="manual"] .ovs-memo-input::before { display: none !important; }
+            tr[data-source="manual"] .memo-input,
+            tr[data-source="manual"] .ovs-memo-input {
+                padding-left: 2px !important;
+                padding-right: 34px !important;
+            }
+            tr[data-source="manual"] .memo-input::after,
+            tr[data-source="manual"] .ovs-memo-input::after {
+                content: "수기";
+                position: absolute;
+                right: 2px; top: 2px;
+                background: #111827;
+                color: white;
+                font-size: 9px;
+                font-weight: 800;
+                padding: 1px 4px;
+                border-radius: 3px;
+                line-height: 1.4;
+                letter-spacing: 0.3px;
             }
         }
         @media print {
