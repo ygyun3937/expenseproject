@@ -307,6 +307,21 @@
         @media screen {
             .landscape-header { display: none !important; }
             .print-only-tab { display: none !important; }
+            .print-only-receipts { display: none !important; }
+        }
+        @media print {
+            .print-only-receipts { display: block !important; }
+            .print-only-receipts .receipt-print-page {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                page-break-before: always !important;
+                page-break-inside: avoid !important;
+                break-before: page !important;
+                break-inside: avoid !important;
+                margin: 0 !important;
+            }
         }
         /* 행 영수증 액션 버튼 — data-receipt-file 속성 유무에 따라 자동 전환 */
         tr[data-receipt-file] .row-receipt-attach { display: none !important; }
@@ -573,6 +588,24 @@
             <div id="receiptPreviewBody" class="flex-1 overflow-auto bg-gray-50 rounded border border-gray-200 flex items-center justify-center min-h-[400px]"></div>
             <div class="flex gap-2 mt-3">
                 <button onclick="closeReceiptPreview()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition font-bold text-sm">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 증빙 영수증 PDF 미리보기 모달 -->
+    <div id="receiptsPdfPreviewModal" class="hidden-el fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center no-print backdrop-blur-sm" onclick="if(event.target===this) closeReceiptsPdfPreview()">
+        <div class="bg-white p-4 rounded-xl shadow-2xl w-full max-w-4xl mx-4 border-t-8 border-rose-500 max-h-[95vh] flex flex-col">
+            <div class="flex items-center justify-between mb-3 gap-3">
+                <h3 class="text-lg font-black text-rose-900 flex items-center shrink-0"><span class="mr-2">📎</span> 증빙 영수증 PDF</h3>
+                <span id="receiptsPdfPreviewFilename" class="text-xs text-gray-500 truncate flex-1 text-right"></span>
+                <button onclick="closeReceiptsPdfPreview()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none shrink-0">×</button>
+            </div>
+            <div class="flex-1 overflow-hidden bg-gray-50 rounded border border-gray-200 min-h-[400px]">
+                <iframe id="receiptsPdfPreviewFrame" src="" style="width:100%; height:75vh; border:0;" title="증빙 PDF 미리보기"></iframe>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button onclick="closeReceiptsPdfPreview()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition font-bold text-sm">닫기</button>
+                <button onclick="downloadReceiptsPdfFromPreview()" class="flex-1 bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition font-bold text-sm shadow-sm">📥 다운로드</button>
             </div>
         </div>
     </div>
@@ -1450,7 +1483,7 @@
             el.innerText = (start || end) ? `📅 출장기간: ${start || '-'} ~ ${end || '-'}` : '';
         }
 
-        function smartPrint() {
+        async function smartPrint() {
             syncOverseasTripPeriodPrint();
             const domesticTotal = unformatComma(document.getElementById('grandTotal_P')?.innerText || '0');
             const overseasTotal = unformatComma(document.getElementById('overseasGrandTotal')?.innerText || '0');
@@ -1534,12 +1567,25 @@
             // 해외 출장일비 금액 합계 0이면 해외 출장일비 섹션 제외
             const ovsTripTotal = unformatComma(document.getElementById('overseasTripFooterTotal')?.innerText || '0');
             if (ovsTripTotal === 0) document.getElementById('overseasTripSection')?.classList.add('skip-print');
+
+            // 증빙 PDF 페이지 첨부 — 정산서 마지막 다음에 영수증 페이지 인쇄
+            let receiptContainer = null;
+            try {
+                receiptContainer = await buildReceiptPrintSection();
+                if (receiptContainer) document.body.appendChild(receiptContainer);
+            } catch (e) {
+                console.warn('영수증 인쇄 첨부 실패 — 정산서만 인쇄', e);
+            }
+
             const cleanup = () => {
                 domView?.classList.remove('skip-print');
                 ovsView?.classList.remove('skip-print');
                 portraitWrapper?.classList.remove('skip-print');
                 document.getElementById('tripSection')?.classList.remove('skip-print');
                 document.getElementById('overseasTripSection')?.classList.remove('skip-print');
+                if (receiptContainer && receiptContainer.parentNode) {
+                    receiptContainer.parentNode.removeChild(receiptContainer);
+                }
                 window.removeEventListener('afterprint', cleanup);
             };
             window.addEventListener('afterprint', cleanup);
@@ -1662,16 +1708,74 @@
             if (window._receiptPreviewURL) { URL.revokeObjectURL(window._receiptPreviewURL); window._receiptPreviewURL = null; }
         }
 
-        // ===== 증빙 영수증 PDF 병합 다운로드 (현재 활성 탭 기준) =====
-        async function mergeReceiptsPDF() {
+        // ===== PDF.js 동적 로드 (인쇄용 페이지 렌더링) =====
+        let _pdfjsReady = null;
+        function ensurePdfJs() {
+            if (_pdfjsReady) return _pdfjsReady;
+            _pdfjsReady = new Promise((resolve, reject) => {
+                if (window.pdfjsLib) {
+                    if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    }
+                    resolve();
+                    return;
+                }
+                const s = document.createElement('script');
+                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                s.onload = () => {
+                    if (window.pdfjsLib) {
+                        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                        resolve();
+                    } else {
+                        reject(new Error('pdfjsLib 글로벌 미발견'));
+                    }
+                };
+                s.onerror = () => reject(new Error('PDF.js 로드 실패'));
+                document.head.appendChild(s);
+            });
+            return _pdfjsReady;
+        }
+
+        // 인쇄 시 증빙 PDF 각 페이지를 이미지로 렌더해 print-only 컨테이너 반환
+        async function buildReceiptPrintSection() {
+            const result = await buildMergedReceiptsBlob();
+            if (!result || result.error || !result.blob) return null;
+            try { await ensurePdfJs(); } catch (e) { console.warn('PDF.js 로드 실패 — 영수증 인쇄 첨부 스킵', e); return null; }
+            try {
+                const buf = await result.blob.arrayBuffer();
+                const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+                const container = document.createElement('div');
+                container.id = 'receiptPrintAppend';
+                container.className = 'print-only-receipts';
+                for (let i = 1; i <= doc.numPages; i++) {
+                    const page = await doc.getPage(i);
+                    const viewport = page.getViewport({ scale: 1.6 });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                    const img = document.createElement('img');
+                    img.src = canvas.toDataURL('image/png');
+                    img.className = 'receipt-print-page';
+                    img.alt = `증빙 영수증 ${i}/${doc.numPages}`;
+                    container.appendChild(img);
+                }
+                return container;
+            } catch (e) {
+                console.warn('영수증 페이지 렌더 실패 — 인쇄 첨부 스킵', e);
+                return null;
+            }
+        }
+
+        // ===== 증빙 영수증 PDF — 빌더 (현재 활성 탭 기준 병합) =====
+        // 반환: { blob, filename } | { error: string }
+        async function buildMergedReceiptsBlob() {
             const allFiles = (window.uploadedReceiptFiles || []);
             const tabLabel = activeTab === 'overseas' ? '해외' : '국내';
             const tbodyId = activeTab === 'overseas' ? 'overseasTableBody' : 'tableBody';
             if (allFiles.length === 0) {
-                alert(`업로드된 영수증이 없습니다. ${tabLabel} 탭에서 먼저 영수증을 업로드해 주세요.`);
-                return;
+                return { error: `업로드된 영수증이 없습니다. ${tabLabel} 탭에서 먼저 영수증을 업로드해 주세요.` };
             }
-            // 현재 탭 표에 반영된 영수증만 포함 (삭제된 행은 제외)
             const activeFileNames = new Set();
             document.querySelectorAll(`#${tbodyId} tr[data-receipt-file]`).forEach(tr => {
                 const f = tr.getAttribute('data-receipt-file');
@@ -1685,48 +1789,77 @@
                 return true;
             });
             if (files.length === 0) {
-                alert(`현재 ${tabLabel} 탭에 반영된 영수증이 없습니다.\n(다른 탭의 영수증은 해당 탭에서 PDF 추출하세요)`);
-                return;
+                return { error: `현재 ${tabLabel} 탭에 반영된 영수증이 없습니다.\n(다른 탭의 영수증은 해당 탭에서 PDF 추출하세요)` };
             }
             if (!window.PDFLib) {
-                alert('pdf-lib 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');
-                return;
+                return { error: 'pdf-lib 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.' };
             }
-            const btn = document.getElementById('mergePdfBtn');
-            if (btn) { btn.disabled = true; btn.innerText = '병합 중...'; }
-            try {
-                const { PDFDocument } = window.PDFLib;
-                const merged = await PDFDocument.create();
-                for (const entry of files) {
-                    const buf = await entry.blob.arrayBuffer();
-                    const type = entry.blob.type || '';
-                    if (type === 'application/pdf' || entry.name.toLowerCase().endsWith('.pdf')) {
-                        const src = await PDFDocument.load(buf, { ignoreEncryption: true });
-                        const copied = await merged.copyPages(src, src.getPageIndices());
-                        copied.forEach(p => merged.addPage(p));
-                    } else {
-                        // 이미지 → PDF 페이지
-                        let img;
-                        if (type.includes('png') || entry.name.toLowerCase().endsWith('.png')) img = await merged.embedPng(buf);
-                        else img = await merged.embedJpg(buf);
-                        const page = merged.addPage([img.width, img.height]);
-                        page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
-                    }
+            const { PDFDocument } = window.PDFLib;
+            const merged = await PDFDocument.create();
+            for (const entry of files) {
+                const buf = await entry.blob.arrayBuffer();
+                const type = entry.blob.type || '';
+                if (type === 'application/pdf' || entry.name.toLowerCase().endsWith('.pdf')) {
+                    const src = await PDFDocument.load(buf, { ignoreEncryption: true });
+                    const copied = await merged.copyPages(src, src.getPageIndices());
+                    copied.forEach(p => merged.addPage(p));
+                } else {
+                    let img;
+                    if (type.includes('png') || entry.name.toLowerCase().endsWith('.png')) img = await merged.embedPng(buf);
+                    else img = await merged.embedJpg(buf);
+                    const page = merged.addPage([img.width, img.height]);
+                    page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
                 }
-                const bytes = await merged.save();
-                const blob = new Blob([bytes], { type: 'application/pdf' });
-                const name = document.getElementById('userName')?.value || '영수증';
-                const today = new Date().toISOString().slice(0,10);
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `${name}_${tabLabel}_증빙영수증_${today}.pdf`;
-                document.body.appendChild(a); a.click();
-                setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 100);
-            } catch (e) {
-                alert('PDF 병합 실패: ' + e.message);
-            } finally {
-                if (btn) { btn.disabled = false; btn.innerText = '📎 증빙PDF'; }
             }
+            const bytes = await merged.save();
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            const name = document.getElementById('userName')?.value || '영수증';
+            const today = new Date().toISOString().slice(0,10);
+            const filename = `${name}_${tabLabel}_증빙영수증_${today}.pdf`;
+            return { blob, filename };
+        }
+
+        // ===== 증빙 PDF 버튼 — 미리보기 모달 (다운로드는 모달 안에서) =====
+        let _currentReceiptsPdfBlob = null;
+        let _currentReceiptsPdfFilename = null;
+
+        async function mergeReceiptsPDF() {
+            const btn = document.getElementById('mergePdfBtn');
+            if (btn) { btn.disabled = true; btn.innerText = '준비 중...'; }
+            try {
+                const result = await buildMergedReceiptsBlob();
+                if (result.error) { alert(result.error); return; }
+                _currentReceiptsPdfBlob = result.blob;
+                _currentReceiptsPdfFilename = result.filename;
+                const url = URL.createObjectURL(result.blob);
+                const frame = document.getElementById('receiptsPdfPreviewFrame');
+                frame.src = url;
+                document.getElementById('receiptsPdfPreviewFilename').innerText = result.filename;
+                document.getElementById('receiptsPdfPreviewModal').classList.remove('hidden-el');
+            } catch (e) {
+                alert('증빙 PDF 생성 실패: ' + e.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg> 증빙PDF`; }
+            }
+        }
+
+        function closeReceiptsPdfPreview() {
+            const modal = document.getElementById('receiptsPdfPreviewModal');
+            const frame = document.getElementById('receiptsPdfPreviewFrame');
+            const url = frame.src;
+            frame.src = 'about:blank';
+            if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+            modal.classList.add('hidden-el');
+        }
+
+        function downloadReceiptsPdfFromPreview() {
+            if (!_currentReceiptsPdfBlob) return;
+            const url = URL.createObjectURL(_currentReceiptsPdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = _currentReceiptsPdfFilename || 'receipts.pdf';
+            document.body.appendChild(a); a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
         }
 
         // ===== 제출 전 규정 검증 =====
