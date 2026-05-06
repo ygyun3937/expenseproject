@@ -656,8 +656,8 @@
             </div>
             
             <div class="flex space-x-2 pb-2">
-                <button onclick="clearUserProfile()" class="bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm" title="브라우저에 저장된 성명·부서·차량 정보 초기화">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> 프로필 초기화
+                <button onclick="clearUserProfile()" class="bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm" title="브라우저에 저장된 개인정보(성명·부서·차량) 삭제">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> 개인정보 삭제
                 </button>
                 <button onclick="saveTempData()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-3 py-1.5 rounded text-xs font-bold transition flex items-center shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg> 임시저장
@@ -1842,9 +1842,9 @@
         }
 
         function clearUserProfile() {
-            if (!confirm('저장된 개인 프로필(성명·부서·차량)을 삭제할까요?')) return;
+            if (!confirm('브라우저에 저장된 개인정보(성명·부서·차량)를 삭제할까요?')) return;
             try { localStorage.removeItem(PROFILE_KEY); } catch(e) {}
-            alert('프로필 삭제됨. 다음 방문 시 자동 채움이 해제됩니다.');
+            alert('개인정보가 삭제되었습니다. 다음 방문 시 자동 채움이 해제됩니다.');
         }
         function isOverMealLimit(amount, headcount) {
             const hc = Math.max(1, parseInt(headcount) || 1);
