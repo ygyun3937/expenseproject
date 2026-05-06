@@ -296,17 +296,25 @@
             <p class="text-xs text-gray-500 mb-4">지역을 선택해 직급별 기준액을 설정합니다. ‘+’로 새 지역을 추가하거나 🗑로 삭제할 수 있습니다.</p>
 
             <div class="mb-3 bg-indigo-50 p-2 rounded-lg border border-indigo-100">
-                <div class="flex items-center gap-2">
-                    <select id="pd-region-select" onchange="loadPerDiemSettingsUI()" class="flex-1 border border-indigo-300 rounded p-2 text-sm font-bold bg-white text-indigo-900 outline-none cursor-pointer shadow-sm"></select>
-                    <button onclick="addPerDiemRegion()" class="bg-indigo-600 text-white text-sm font-bold px-3 py-2 rounded hover:bg-indigo-700 shadow-sm" title="지역 추가">+</button>
-                    <button onclick="deletePerDiemRegion()" class="bg-red-500 text-white text-sm font-bold px-3 py-2 rounded hover:bg-red-600 shadow-sm" title="현재 지역 삭제">🗑</button>
-                </div>
+                <select id="pd-region-select" onchange="loadPerDiemSettingsUI()" class="w-full border border-indigo-300 rounded p-2 text-sm font-bold bg-white text-indigo-900 outline-none cursor-pointer shadow-sm"></select>
                 <div class="grid grid-cols-[70px_1fr] gap-2 mt-2">
                     <label class="text-[11px] font-bold text-indigo-800 self-center text-right">지역명</label>
-                    <input type="text" id="pd-region-name" oninput="onPerDiemMetaChange()" class="border border-indigo-200 rounded p-1.5 text-sm bg-white outline-none" placeholder="예: 가 지역">
+                    <input type="text" id="pd-region-name" disabled class="border border-indigo-200 rounded p-1.5 text-sm bg-white outline-none disabled:bg-gray-50 disabled:text-gray-600" placeholder="예: 가 지역">
                     <label class="text-[11px] font-bold text-indigo-800 self-center text-right">설명</label>
-                    <input type="text" id="pd-region-desc" oninput="onPerDiemMetaChange()" class="border border-indigo-200 rounded p-1.5 text-sm bg-white outline-none" placeholder="예: 북미, 유럽, 일본, 중동 등">
+                    <input type="text" id="pd-region-desc" disabled class="border border-indigo-200 rounded p-1.5 text-sm bg-white outline-none disabled:bg-gray-50 disabled:text-gray-600" placeholder="예: 북미, 유럽, 일본, 중동 등">
                 </div>
+            </div>
+
+            <!-- 액션 버튼 — 보기 모드 -->
+            <div id="pd-view-actions" class="flex gap-2 mb-3">
+                <button onclick="enterPerDiemEditMode()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold px-3 py-2 rounded shadow-sm">✏️ 수정</button>
+                <button onclick="addPerDiemRegion()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-3 py-2 rounded shadow-sm">＋ 추가</button>
+                <button onclick="deletePerDiemRegion()" class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-bold px-3 py-2 rounded shadow-sm">🗑 삭제</button>
+            </div>
+            <!-- 액션 버튼 — 편집 모드 -->
+            <div id="pd-edit-actions" class="hidden-el flex gap-2 mb-3">
+                <button onclick="exitPerDiemEditMode(true)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-3 py-2 rounded shadow-sm">✓ 적용</button>
+                <button onclick="exitPerDiemEditMode(false)" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold px-3 py-2 rounded shadow-sm">편집 취소</button>
             </div>
 
             <div class="grid grid-cols-[70px_1fr] gap-2 mb-2 text-[11px] font-bold text-center text-indigo-800 bg-gray-100 p-2 rounded">
@@ -317,31 +325,31 @@
             <div class="space-y-2 mb-6">
                 <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
                     <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">임원</label>
-                    <input type="number" id="pd-exec-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                    <input type="number" id="pd-exec-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
                 </div>
                 <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
                     <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">부장</label>
-                    <input type="number" id="pd-gm-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                    <input type="number" id="pd-gm-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
                 </div>
                 <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
                     <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">차장</label>
-                    <input type="number" id="pd-dgm-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                    <input type="number" id="pd-dgm-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
                 </div>
                 <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
                     <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">과장</label>
-                    <input type="number" id="pd-manager-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                    <input type="number" id="pd-manager-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
                 </div>
                 <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
                     <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">대리</label>
-                    <input type="number" id="pd-am-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                    <input type="number" id="pd-am-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
                 </div>
                 <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
                     <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">주임</label>
-                    <input type="number" id="pd-sv-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                    <input type="number" id="pd-sv-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
                 </div>
                 <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-200 shadow-sm">
                     <label class="text-[13px] font-bold text-gray-700 w-[70px] text-center">사원</label>
-                    <input type="number" id="pd-staff-krw" class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500" placeholder="원화">
+                    <input type="number" id="pd-staff-krw" disabled class="border border-gray-300 rounded p-1.5 w-full text-right font-bold text-indigo-700 outline-none focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-600" placeholder="원화">
                 </div>
             </div>
 
@@ -1001,15 +1009,7 @@
                     .join('');
                 sel.innerHTML = opts;
                 sel.value = (cur && perDiemRates[cur]) ? cur : '';
-                syncRegionTitle(sel);
             });
-        }
-
-        // 행의 지역 select 에 현재 선택된 지역의 설명을 title 로 부여 (커스텀 툴팁용)
-        function syncRegionTitle(sel) {
-            const v = sel.value;
-            const meta = v && perDiemRates[v];
-            sel.title = meta ? (meta.desc ? `${meta.name} — ${meta.desc}` : meta.name) : '';
         }
 
         // 모달 저장 후 기존 행의 일비 단가를 새 기준으로 일괄 갱신
@@ -2007,19 +2007,34 @@
             // 커스텀 툴팁 — 경고/상태 클래스 있는 셀에 마우스 올리면 즉시 사유 표시
             const tip = document.getElementById('warningTooltip');
             const WARN_CLASSES = ['meal-limit-warning','trip-meal-conflict','entertainment-pending','entertainment-complete'];
-            // 추가 툴팁 대상: 해외 출장일비 행의 지역 select (선택된 지역 설명을 보여줌)
-            const TOOLTIP_CLASSES = ['ovs-trip-region'];
             const findWarnEl = (target) => {
                 let el = target;
                 while (el && el !== document.body) {
-                    if (el.classList && el.title) {
-                        if (WARN_CLASSES.some(c => el.classList.contains(c))) return el;
-                        if (TOOLTIP_CLASSES.some(c => el.classList.contains(c))) return el;
-                    }
+                    if (el.classList && WARN_CLASSES.some(c => el.classList.contains(c)) && el.title) return el;
                     el = el.parentElement;
                 }
                 return null;
             };
+            // 해외 지역 select: 콤보박스 열 때 옵션 텍스트를 "이름 — 설명" 으로 확장,
+            // 닫힐 때(blur) 다시 짧은 이름으로 복원
+            document.addEventListener('focusin', e => {
+                const sel = e.target;
+                if (!sel || !sel.classList || !sel.classList.contains('ovs-trip-region')) return;
+                Array.from(sel.options).forEach(opt => {
+                    const k = opt.value;
+                    if (!k || !perDiemRates[k]) return;
+                    if (!opt.dataset._short) opt.dataset._short = opt.textContent;
+                    const meta = perDiemRates[k];
+                    opt.textContent = meta.desc ? `${meta.name} — ${meta.desc}` : meta.name;
+                });
+            });
+            document.addEventListener('focusout', e => {
+                const sel = e.target;
+                if (!sel || !sel.classList || !sel.classList.contains('ovs-trip-region')) return;
+                Array.from(sel.options).forEach(opt => {
+                    if (opt.dataset._short) opt.textContent = opt.dataset._short;
+                });
+            });
             document.addEventListener('mouseover', e => {
                 const el = findWarnEl(e.target);
                 if (!el) return;
@@ -2051,6 +2066,9 @@
             refreshRegionSelects();
         }
 
+        let isPerDiemEditMode = false;
+        let _perDiemSnapshot = null;
+
         function _readModalInputsToRegion(regionKey) {
             const r = perDiemRates[regionKey];
             if (!r) return;
@@ -2066,15 +2084,20 @@
         function _populateRegionSelect(selectedKey) {
             const sel = document.getElementById('pd-region-select');
             const entries = Object.entries(perDiemRates);
-            sel.innerHTML = entries.map(([k, v]) => `<option value="${k}">${v.name || k}${v.desc ? ' (' + v.desc + ')' : ''}</option>`).join('');
+            sel.innerHTML = entries.map(([k, v]) => `<option value="${k}">${v.name || k}</option>`).join('');
             if (selectedKey && perDiemRates[selectedKey]) sel.value = selectedKey;
         }
 
+        function _setPerDiemInputsDisabled(disabled) {
+            ['pd-region-name', 'pd-region-desc'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.disabled = disabled;
+            });
+            PER_DIEM_RANKS.forEach(rk => {
+                const el = document.getElementById(`pd-${rk}-krw`); if (el) el.disabled = disabled;
+            });
+        }
+
         function loadPerDiemSettingsUI() {
-            // 변경 사항을 메모리에 반영 후 새 지역 로드
-            if (currentEditingRegion && perDiemRates[currentEditingRegion]) {
-                _readModalInputsToRegion(currentEditingRegion);
-            }
             currentEditingRegion = document.getElementById('pd-region-select').value;
             const r = perDiemRates[currentEditingRegion];
             if (!r) return;
@@ -2085,18 +2108,33 @@
             });
         }
 
-        // 이름/설명 입력 시 select option 텍스트 즉시 갱신 (저장 전 미리보기)
-        function onPerDiemMetaChange() {
-            if (!currentEditingRegion || !perDiemRates[currentEditingRegion]) return;
-            _readModalInputsToRegion(currentEditingRegion);
-            _populateRegionSelect(currentEditingRegion);
+        function enterPerDiemEditMode() {
+            isPerDiemEditMode = true;
+            _setPerDiemInputsDisabled(false);
+            document.getElementById('pd-region-select').disabled = true;  // 편집 중 지역 변경 차단
+            document.getElementById('pd-view-actions').classList.add('hidden-el');
+            document.getElementById('pd-edit-actions').classList.remove('hidden-el');
+        }
+
+        function exitPerDiemEditMode(applyChanges) {
+            if (applyChanges && currentEditingRegion && perDiemRates[currentEditingRegion]) {
+                _readModalInputsToRegion(currentEditingRegion);
+                _populateRegionSelect(currentEditingRegion);  // 이름이 바뀌었을 수 있어 select 옵션 갱신
+            } else {
+                // 편집 취소 — 메모리 값으로 입력 복원
+                loadPerDiemSettingsUI();
+            }
+            isPerDiemEditMode = false;
+            _setPerDiemInputsDisabled(true);
+            document.getElementById('pd-region-select').disabled = false;
+            document.getElementById('pd-view-actions').classList.remove('hidden-el');
+            document.getElementById('pd-edit-actions').classList.add('hidden-el');
         }
 
         function addPerDiemRegion() {
-            // 이전 편집 내용 보존
-            if (currentEditingRegion && perDiemRates[currentEditingRegion]) {
-                _readModalInputsToRegion(currentEditingRegion);
-            }
+            const name = (prompt('새 지역명을 입력하세요. (예: 동남아 지역)') || '').trim();
+            if (!name) return;
+            const desc = (prompt('지역 설명 (선택, 비워도 됨)') || '').trim();
             const existing = Object.keys(perDiemRates);
             let newKey = '';
             for (let i = 65; i <= 90; i++) {
@@ -2108,10 +2146,11 @@
                 while (existing.includes(`R${i}`)) i++;
                 newKey = `R${i}`;
             }
-            perDiemRates[newKey] = { name: `${newKey} 지역`, desc: '', rates: _emptyRates() };
+            perDiemRates[newKey] = { name, desc, rates: _emptyRates() };
             currentEditingRegion = newKey;
             _populateRegionSelect(newKey);
             loadPerDiemSettingsUI();
+            enterPerDiemEditMode();  // 신규 지역은 즉시 편집 모드 진입 (단가 입력 위해)
         }
 
         function deletePerDiemRegion() {
@@ -2121,7 +2160,7 @@
                 return;
             }
             const meta = perDiemRates[currentEditingRegion];
-            if (!confirm(`"${meta?.name || currentEditingRegion}" 지역을 삭제하시겠습니까?\n(이 지역을 사용 중인 행의 선택은 빈 값으로 변경됩니다.)`)) return;
+            if (!confirm(`"${meta?.name || currentEditingRegion}" 지역을 삭제하시겠습니까?\n(저장하기를 눌러야 최종 반영됩니다.)`)) return;
             delete perDiemRates[currentEditingRegion];
             const remaining = Object.keys(perDiemRates);
             currentEditingRegion = remaining[0];
@@ -2130,6 +2169,13 @@
         }
 
         function openPerDiemSettings() {
+            // 모달 열기 시 현재 perDiemRates 스냅샷 — 닫기/취소 시 롤백 가능
+            _perDiemSnapshot = JSON.parse(JSON.stringify(perDiemRates));
+            isPerDiemEditMode = false;
+            _setPerDiemInputsDisabled(true);
+            document.getElementById('pd-region-select').disabled = false;
+            document.getElementById('pd-view-actions').classList.remove('hidden-el');
+            document.getElementById('pd-edit-actions').classList.add('hidden-el');
             const firstKey = Object.keys(perDiemRates)[0] || 'A';
             currentEditingRegion = firstKey;
             _populateRegionSelect(firstKey);
@@ -2137,18 +2183,29 @@
             document.getElementById('perDiemSettingsModal').classList.remove('hidden-el');
         }
 
-        function closePerDiemSettings() { document.getElementById('perDiemSettingsModal').classList.add('hidden-el'); }
+        function closePerDiemSettings() {
+            // 저장하지 않고 닫기 → 메모리를 스냅샷으로 롤백 (추가/삭제/수정 모두 폐기)
+            if (_perDiemSnapshot) {
+                perDiemRates = _perDiemSnapshot;
+                _perDiemSnapshot = null;
+            }
+            isPerDiemEditMode = false;
+            document.getElementById('perDiemSettingsModal').classList.add('hidden-el');
+        }
 
         function savePerDiemSettings() {
-            // 현재 편집 중인 지역의 입력값을 perDiemRates 에 반영
-            if (currentEditingRegion && perDiemRates[currentEditingRegion]) {
+            // 편집 모드라면 현재 입력값을 메모리에 먼저 반영
+            if (isPerDiemEditMode && currentEditingRegion && perDiemRates[currentEditingRegion]) {
                 _readModalInputsToRegion(currentEditingRegion);
             }
             localStorage.setItem('MAK_PerDiemRates_v3', JSON.stringify(perDiemRates));
-            // 행의 region select 옵션 + 단가 동기화
+            // 행의 region select 옵션 + 사용 중인 단가 일괄 동기화
             refreshRegionSelects();
             reapplyPerDiemRates();
-            closePerDiemSettings();
+            // 정상 저장 → 스냅샷 폐기 (롤백 안 함)
+            _perDiemSnapshot = null;
+            isPerDiemEditMode = false;
+            document.getElementById('perDiemSettingsModal').classList.add('hidden-el');
             alert('일비 기준액이 저장되었습니다.');
         }
 
@@ -2159,8 +2216,6 @@
             const rankSelect = tr.querySelector('.ovs-trip-rank');
             const priceInput = tr.querySelector('.ovs-trip-price');
             if (!regionSelect || !rankSelect || !priceInput) return;
-            // 지역 select 의 title 도 같이 갱신 (툴팁용)
-            syncRegionTitle(regionSelect);
             const region = regionSelect.value;
             const rank = rankSelect.value;
             if (region && rank && perDiemRates[region]?.rates?.[rank]) {
@@ -2951,7 +3006,7 @@
 
         function addOverseasTripRow() {
             const tbody = document.getElementById('overseasTripBody'); const tr = document.createElement('tr'); tr.className = "border-b border-teal-100 hover:bg-teal-50/30 transition";
-            tr.innerHTML = `<td class="p-1 border-r border-teal-100 text-center text-slate-400 text-[12px] bg-white font-bold ovs-trip-seq">1</td><td class="p-1 border-r border-teal-100 text-center bg-white"><div class="flex items-center justify-center gap-1"><input type="date" class="ovs-trip-total-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="syncTripClaimBounds(this)"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-total-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="syncTripClaimBounds(this)"></div></td><td class="p-1 border-r border-teal-100 text-center bg-white"><div class="flex items-center justify-center gap-1"><input type="date" class="ovs-trip-claim-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-claim-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"></div></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-center" placeholder="국가/도시"></div></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-region text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this); syncRegionTitle(this);"><option value="">선택</option>${Object.entries(perDiemRates).map(([k, v]) => `<option value="${k}">${v.name || k}</option>`).join('')}</select></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-rank text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option><option value="exec">임원</option><option value="gm">부장</option><option value="dgm">차장</option><option value="manager">과장</option><option value="am">대리</option><option value="sv">주임</option><option value="staff">사원</option></select></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-price text-right text-[#19736E] font-bold" placeholder="" oninput="formatComma(this, true); calcOvsTripRow(this);"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="number" class="table-input ovs-trip-days text-center" placeholder="" oninput="calcOvsTripRow(this)"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-krw text-right font-bold text-[#19736E]" readonly value="" placeholder=""></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-left" placeholder="비고"></div></td><td class="p-1 border-teal-100 no-print bg-white"><div class="flex items-center justify-center gap-1"><button onclick="this.closest('tr').remove(); reIndexOverseasTripRows(); recalcOverseasTripTotal(); updateOverseasTotals();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
+            tr.innerHTML = `<td class="p-1 border-r border-teal-100 text-center text-slate-400 text-[12px] bg-white font-bold ovs-trip-seq">1</td><td class="p-1 border-r border-teal-100 text-center bg-white"><div class="flex items-center justify-center gap-1"><input type="date" class="ovs-trip-total-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="syncTripClaimBounds(this)"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-total-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="syncTripClaimBounds(this)"></div></td><td class="p-1 border-r border-teal-100 text-center bg-white"><div class="flex items-center justify-center gap-1"><input type="date" class="ovs-trip-claim-start border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"><span class="text-gray-400">~</span><input type="date" class="ovs-trip-claim-end border border-teal-100 rounded text-[11px] px-1 py-0.5 bg-white outline-none" oninput="autoFillTripDays(this)"></div></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-center" placeholder="국가/도시"></div></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-region text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option>${Object.entries(perDiemRates).map(([k, v]) => `<option value="${k}">${v.name || k}</option>`).join('')}</select></td><td class="p-1 border-r border-teal-100 bg-white"><select class="table-input ovs-trip-rank text-[11px] bg-transparent w-full outline-none appearance-none text-center cursor-pointer font-bold text-gray-700" onchange="autoSetPerDiem(this)"><option value="">선택</option><option value="exec">임원</option><option value="gm">부장</option><option value="dgm">차장</option><option value="manager">과장</option><option value="am">대리</option><option value="sv">주임</option><option value="staff">사원</option></select></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-price text-right text-[#19736E] font-bold" placeholder="" oninput="formatComma(this, true); calcOvsTripRow(this);"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="number" class="table-input ovs-trip-days text-center" placeholder="" oninput="calcOvsTripRow(this)"></td><td class="p-1 border-r border-teal-100 bg-white"><input type="text" class="table-input ovs-trip-krw text-right font-bold text-[#19736E]" readonly value="" placeholder=""></td><td class="p-1 border-r border-teal-100 bg-white"><div contenteditable="true" class="editable-cell text-left" placeholder="비고"></div></td><td class="p-1 border-teal-100 no-print bg-white"><div class="flex items-center justify-center gap-1"><button onclick="this.closest('tr').remove(); reIndexOverseasTripRows(); recalcOverseasTripTotal(); updateOverseasTotals();" class="text-red-400 hover:text-red-600 text-lg leading-none shrink-0" title="행 삭제">×</button></div></td>`;
             tbody.appendChild(tr);
             reIndexOverseasTripRows();
         }
