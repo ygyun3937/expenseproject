@@ -1448,25 +1448,45 @@
                 alert("정산할 금액이 없습니다. 항목을 입력한 뒤 다시 시도해 주세요.");
                 return;
             }
-            // 해외에 외화 항목이 있는데 환율이 누락된 행 검사 — 항상 실행
-            // (환율이 0 이면 환산액도 0 이라 overseasGrandTotal 가드 안에 두면 검사가 스킵되는 버그 회피)
+            // 해외 인쇄 검증: 출장기간 설정 + [평균 환율 일괄 연동] 적용 + 모든 외화 행이 평균환율과 일치
             {
-                const missing = [];
-                document.querySelectorAll('#overseasTableBody tr').forEach((row, idx) => {
-                    const hasCost = Array.from(row.querySelectorAll('.ovs-cost-input')).some(i => unformatComma(i.value) > 0);
-                    if (!hasCost) return;
-                    const curr = (row.querySelector('.ovs-curr')?.value || '').trim().toUpperCase();
-                    if (!curr || curr === 'KRW' || curr === '원' || curr === '원화') return;
-                    const rate = unformatComma(row.querySelector('.ovs-rate')?.value || '0');
-                    if (rate <= 0) {
+                const overseasRows = Array.from(document.querySelectorAll('#overseasTableBody tr'));
+                const hasOverseasCost = overseasRows.some(row =>
+                    Array.from(row.querySelectorAll('.ovs-cost-input')).some(i => unformatComma(i.value) > 0)
+                );
+                if (hasOverseasCost) {
+                    const tripStart = document.getElementById('tripStartDate')?.value || '';
+                    const tripEnd = document.getElementById('tripEndDate')?.value || '';
+                    if (!tripStart || !tripEnd) {
+                        alert('❌ 인쇄할 수 없습니다.\n\n해외 출장 기간(시작일·종료일)을 먼저 입력하고 [평균 환율 일괄 연동] 버튼으로 환율을 적용해 주세요.');
+                        return;
+                    }
+                    if (!_avgRateState || _avgRateState.startDate !== tripStart || _avgRateState.endDate !== tripEnd) {
+                        alert(`❌ 인쇄할 수 없습니다.\n\n현재 출장 기간(${tripStart} ~ ${tripEnd})으로 [평균 환율 일괄 연동] 버튼을 클릭해 평균환율을 일괄 적용해 주세요.`);
+                        return;
+                    }
+                    // 각 외화 행의 환율이 평균환율 일괄 연동 결과와 일치하는지 (수동 환율 / 추가 행 / 미적용 검출)
+                    const violations = [];
+                    overseasRows.forEach((row, idx) => {
+                        const hasCost = Array.from(row.querySelectorAll('.ovs-cost-input')).some(i => unformatComma(i.value) > 0);
+                        if (!hasCost) return;
+                        const curr = (row.querySelector('.ovs-curr')?.value || '').trim().toUpperCase();
+                        if (!curr || curr === 'KRW' || curr === '원' || curr === '원화') return;
+                        const rateNum = unformatComma(row.querySelector('.ovs-rate')?.value || '0');
+                        const expected = _avgRateState.rates[curr];
+                        const expectedNum = expected ? parseFloat(String(expected).replace(/,/g, '')) : 0;
                         const m = row.querySelector('.val-month')?.value || '?';
                         const d = row.querySelector('.val-day')?.value || '?';
-                        missing.push(`${idx + 1}번째 행 (${m}/${d}, ${curr})`);
+                        if (expectedNum <= 0) {
+                            violations.push(`${idx + 1}번째 행 (${m}/${d}, ${curr}) — 평균환율 미적용 통화`);
+                        } else if (Math.abs(rateNum - expectedNum) > 0.001) {
+                            violations.push(`${idx + 1}번째 행 (${m}/${d}, ${curr}) — 평균환율(${expected})과 불일치`);
+                        }
+                    });
+                    if (violations.length > 0) {
+                        alert(`❌ 인쇄할 수 없습니다.\n\n해외 항목 ${violations.length}건이 평균환율과 다릅니다 (수동 환율 적용·환율 누락·평균연동 후 추가된 행 등):\n• ${violations.slice(0, 5).join('\n• ')}${violations.length > 5 ? `\n외 ${violations.length - 5}건` : ''}\n\n해외 탭의 [평균 환율 일괄 연동] 버튼을 다시 클릭해 모든 행에 평균환율을 일괄 적용한 뒤 인쇄해 주세요.`);
+                        return;
                     }
-                });
-                if (missing.length > 0) {
-                    alert(`❌ 인쇄할 수 없습니다.\n\n해외 항목 ${missing.length}건에 환율이 적용되지 않았습니다:\n• ${missing.slice(0, 5).join('\n• ')}${missing.length > 5 ? `\n외 ${missing.length - 5}건` : ''}\n\n해외 탭에서 [평균 환율 일괄 연동] 버튼을 눌러 모든 환율을 적용한 뒤 다시 인쇄해 주세요.`);
-                    return;
                 }
             }
             markEmptyRows();
@@ -3021,10 +3041,15 @@
             return v.toFixed(decimals);
         }
 
+        // 평균환율 일괄 연동 적용 상태 — 인쇄 검증 시 비교 기준
+        // { startDate, endDate, rates: { USD: "1397.56", JPY: "9.5234", ... } }
+        let _avgRateState = null;
+
         async function fetchAverageRate() {
             const start = document.getElementById('tripStartDate').value; const end = document.getElementById('tripEndDate').value;
             if (!start || !end) return alert("출장 시작일과 도착일을 모두 입력해주세요.");
             const btn = document.getElementById('avgCalcBtn'); const originalText = btn.innerHTML; btn.innerHTML = `<div class="loader-small mx-auto border-white"></div>`; btn.disabled = true;
+            const newState = { startDate: start, endDate: end, rates: {} };
             try {
                 const currencies = new Set(); document.querySelectorAll('.ovs-curr').forEach(el => { const c = el.value.trim().toUpperCase(); if (c && c !== 'KRW' && c !== '원' && c !== '원화') currencies.add(c); });
                 if (currencies.size === 0) { alert("표에 입력된 외화 내역이 없습니다."); return; }
@@ -3039,9 +3064,13 @@
                     } catch(e) { failures.push(`${curr}: 네트워크 오류`); }
                     if (finalRate > 0) {
                         successCount++;
-                        document.querySelectorAll('#overseasTableBody tr').forEach(row => { if (row.querySelector('.ovs-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-rate').value = formatRate(finalRate, curr); calcOvsRow(row.querySelector('.ovs-rate')); } });
+                        const formatted = formatRate(finalRate, curr);
+                        newState.rates[curr] = formatted;
+                        document.querySelectorAll('#overseasTableBody tr').forEach(row => { if (row.querySelector('.ovs-curr').value.trim().toUpperCase() === curr) { row.querySelector('.ovs-rate').value = formatted; calcOvsRow(row.querySelector('.ovs-rate')); } });
                     }
                 }
+                // 모든 통화가 정상 연동됐을 때만 상태 저장 (실패 통화 있으면 부분 적용 — 검증에서 걸러지도록)
+                _avgRateState = newState;
                 let msg = `✅ 서울외국환중개 매매기준율 ${successCount}개 통화 연동 완료 (기간평균)`;
                 if (failures.length) msg += `\n\n❌ 실패:\n` + failures.join('\n') + `\n\n실패 건은 환율 칸에 수동 입력해 주세요.`;
                 alert(msg);
