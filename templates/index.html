@@ -57,7 +57,9 @@
             }
             .meal-limit-warning { background-color: transparent !important; }
 
-            #overseasTable th, #overseasTable td { padding: 1px 2px !important; font-size: 9px !important; }
+            #overseasTable thead th, #overseasTable tbody td { padding: 1px 2px !important; font-size: 9px !important; }
+            /* 외화 합계(footer) 행 — 국내 표와 동일하게 10px */
+            #overseasTable tfoot td { font-size: 10px !important; padding: 2px 3px !important; }
             /* 출장일비 표 — 인쇄 시 컬럼 간 글자 크기 일관화 */
             #tripAllowanceTable tbody td,
             #tripAllowanceTable tbody .table-input,
@@ -234,6 +236,10 @@
             #settlementTable tbody td:nth-child(8), #settlementTable tbody td.relative {
                 border-right: 1px solid #cbd5e1 !important;
                 border-bottom: 1px solid #cbd5e1 !important;
+            }
+            /* 해외 표 환율(14번째 col, position:relative) 셀도 같은 이슈 — border 강제 */
+            #overseasTable tbody td.relative, #overseasTable tbody td:nth-child(14) {
+                border: 1px solid #cbd5e1 !important;
             }
         }
 
@@ -509,7 +515,7 @@
                     <p class="text-xs font-bold text-slate-700 mb-2">🌍 지역/직급별 일비 기준 (해외 출장)</p>
                     <div class="bg-indigo-50 p-2 rounded border border-indigo-100">
                         <div class="flex items-center gap-2 mb-2">
-                            <select id="pd-region-select" onchange="loadPerDiemSettingsUI()" class="flex-1 border border-indigo-300 rounded p-1.5 text-sm font-bold bg-white text-indigo-900 outline-none cursor-pointer"></select>
+                            <select id="pd-region-select" onchange="onPerDiemRegionChange()" class="flex-1 border border-indigo-300 rounded p-1.5 text-sm font-bold bg-white text-indigo-900 outline-none cursor-pointer"></select>
                             <button type="button" onclick="addPerDiemRegion()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-2.5 py-1.5 rounded shadow-sm" title="지역 추가">＋</button>
                             <button type="button" onclick="deletePerDiemRegion()" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold px-2.5 py-1.5 rounded shadow-sm" title="현재 지역 삭제">🗑</button>
                         </div>
@@ -1156,14 +1162,13 @@
             }
             return out;
         }
-        let perDiemRates = _migratePerDiem({
-            'A': { exec: { fc: 150, krw: 200000 }, gm: { fc: 130, krw: 170000 }, dgm: { fc: 110, krw: 150000 }, manager: { fc: 90, krw: 120000 }, am: { fc: 80, krw: 100000 }, sv: { fc: 70, krw: 90000 }, staff: { fc: 60, krw: 80000 } },
-            'B': { exec: { fc: 130, krw: 170000 }, gm: { fc: 110, krw: 150000 }, dgm: { fc: 90, krw: 120000 }, manager: { fc: 80, krw: 100000 }, am: { fc: 70, krw: 90000 }, sv: { fc: 60, krw: 80000 }, staff: { fc: 50, krw: 70000 } },
-            'C': { exec: { fc: 110, krw: 150000 }, gm: { fc: 90, krw: 120000 }, dgm: { fc: 80, krw: 100000 }, manager: { fc: 70, krw: 90000 }, am: { fc: 60, krw: 80000 }, sv: { fc: 50, krw: 70000 }, staff: { fc: 40, krw: 60000 } }
-        });
+        // 일비 기준 — 서버 settings.json 에서 받아옴 (loadServerConfig). 첫 로드 전에는 빈 객체.
+        // 레거시 localStorage 값이 있으면 마이그레이션 안내(서버 응답 도착 후 비교)
+        let perDiemRates = {};
+        let _legacyLocalPerDiem = null;
         try {
             const saved = localStorage.getItem('MAK_PerDiemRates_v3');
-            if (saved) perDiemRates = _migratePerDiem(JSON.parse(saved));
+            if (saved) _legacyLocalPerDiem = _migratePerDiem(JSON.parse(saved));
         } catch(e){}
 
         // 모든 .ovs-trip-region 셀렉트의 옵션을 perDiemRates 키 기준으로 갱신
@@ -2280,6 +2285,26 @@
                     if (d.overseas_limit_action) window.OVERSEAS_LIMIT_ACTION = d.overseas_limit_action;
                     if (typeof d.trip_allowance_per_day === 'number') window.TRIP_ALLOWANCE = d.trip_allowance_per_day;
                     if (d.fuel_fallback_direction) window.FUEL_FALLBACK = d.fuel_fallback_direction;
+                    // 일비 기준 — 서버 customized=true 면 서버값 권위.
+                    // 서버 customized=false (= 한 번도 저장 안 됨) + localStorage 있으면 localStorage 임시 사용
+                    // → 관리자가 [⚙️ 설정] → [저장] 눌러야 서버에 영구 이전
+                    if (d.per_diem_rates && typeof d.per_diem_rates === 'object') {
+                        if (d.per_diem_rates_customized) {
+                            perDiemRates = _migratePerDiem(d.per_diem_rates);
+                            // 서버가 권위 → 레거시 localStorage 정리
+                            try { localStorage.removeItem('MAK_PerDiemRates_v3'); } catch(e) {}
+                            _legacyLocalPerDiem = null;
+                        } else if (_legacyLocalPerDiem && Object.keys(_legacyLocalPerDiem).length) {
+                            perDiemRates = _legacyLocalPerDiem;
+                            if (!sessionStorage.getItem('MAK_PerDiemMigrationNoticed')) {
+                                console.warn('[일비] 이전 브라우저 설정을 임시 표시 중입니다. 관리자가 ⚙️ 설정에서 [저장] 누르면 서버에 영구 반영되어 모든 사용자에게 적용됩니다.');
+                                sessionStorage.setItem('MAK_PerDiemMigrationNoticed', '1');
+                            }
+                        } else {
+                            perDiemRates = _migratePerDiem(d.per_diem_rates);
+                        }
+                        if (typeof refreshRegionSelects === 'function') refreshRegionSelects();
+                    }
                     window._serverSettings = d;
                 }
             } catch(e) { /* 기본값 유지 */ }
@@ -2335,6 +2360,7 @@
                 fuel_price_gasoline: parseFloat(document.getElementById('as-fuel-gasoline').value) || 0,
                 fuel_price_diesel: parseFloat(document.getElementById('as-fuel-diesel').value) || 0,
                 fuel_price_lpg: parseFloat(document.getElementById('as-fuel-lpg').value) || 0,
+                per_diem_rates: perDiemRates,  // 서버 settings.json 에 함께 저장 — 전사 공통 적용
             };
             try {
                 const res = await fetch('/api/admin/settings', {
@@ -2343,12 +2369,16 @@
                 });
                 const data = await res.json();
                 if (!res.ok) { alert('저장 실패: ' + (data.error || res.status)); return; }
-                // 서버 검증 통과 → 일비도 localStorage 에 저장 + 행 동기화
-                localStorage.setItem('MAK_PerDiemRates_v3', JSON.stringify(perDiemRates));
+                // 서버 저장 성공 → 응답값으로 perDiemRates 동기화 (서버가 정제한 결과 반영)
+                if (data.settings && data.settings.per_diem_rates) {
+                    perDiemRates = _migratePerDiem(data.settings.per_diem_rates);
+                }
+                // 레거시 localStorage 키 정리 (서버가 권위 있는 소스가 됨)
+                try { localStorage.removeItem('MAK_PerDiemRates_v3'); } catch(e) {}
                 refreshRegionSelects();
                 reapplyPerDiemRates();
                 _perDiemSnapshot = null;  // 정상 저장 → 롤백 안 함
-                alert('✅ 저장 완료. 설정이 즉시 반영됩니다.');
+                alert('✅ 저장 완료. 설정이 전사에 즉시 반영됩니다.');
                 document.getElementById('adminSettingsModal').classList.add('hidden-el');
                 await loadServerConfig();
                 updateTotals();
@@ -2506,6 +2536,14 @@
             PER_DIEM_RANKS.forEach(rk => {
                 document.getElementById(`pd-${rk}-krw`).value = r.rates[rk]?.krw ?? 0;
             });
+        }
+
+        // 드롭다운 전환 시: 새 지역 로드 전에 현재 폼값을 이전 지역으로 flush (저장 누르기 전 전환에도 수정값 보존)
+        function onPerDiemRegionChange() {
+            if (currentEditingRegion && perDiemRates[currentEditingRegion]) {
+                _readModalInputsToRegion(currentEditingRegion);
+            }
+            loadPerDiemSettingsUI();
         }
 
         function addPerDiemRegion() {

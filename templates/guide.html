@@ -544,8 +544,7 @@
   </ol>
 
   <div class="note">
-    일비 기준은 브라우저 <code>localStorage</code> 에 저장됩니다 (PC/브라우저별).<br>
-    한도·유가는 서버 <code>settings.json</code> 에 저장 — 전사 공통 적용.
+    <b>저장 위치 (rev. 5 변경):</b> 일비 기준 / 한도 / 유가 모두 서버 <code>settings.json</code> 에 저장됩니다 — 전사 공통 적용. 한 명의 관리자가 [저장]을 누르면 모든 사용자가 같은 기준을 보게 됩니다.
   </div>
 </section>
 
@@ -607,7 +606,7 @@
     </li>
     <li>비밀번호: 기본 <code>admin</code> (서버 <code>.env</code>의 <code>ADMIN_PASSWORD</code>로 변경 가능)</li>
     <li>한도/유가/일비 모두 한 번의 [저장]으로 일괄 반영</li>
-    <li>한도·유가는 <code>settings.json</code> 서버 저장 (전사 공통), 일비 기준은 브라우저 <code>localStorage</code> 저장 (PC별)</li>
+    <li>한도·유가·일비 기준 모두 서버 <code>settings.json</code> 저장 (전사 공통)</li>
     <li>모달 [취소] 시 일비 기준 변경사항도 자동 롤백 (실수 방지)</li>
   </ul>
 
