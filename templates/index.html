@@ -1583,6 +1583,7 @@
                 return;
             }
             // 수기 입력 행 영수증 첨부 검증 — 영수증 미첨부 수기 행이 있으면 인쇄 차단
+            // 단, 국내 표의 유류비(col-2) / 통행료(col-3 + 메모에 "통행료") 는 영수증 면제
             {
                 const noReceipt = [];
                 const checkManual = (tbodyId, costSel, prefix) => {
@@ -1590,6 +1591,7 @@
                         const hasCost = Array.from(tr.querySelectorAll(costSel)).some(i => unformatComma(i.value) > 0);
                         if (!hasCost) return;
                         if (tr.getAttribute('data-receipt-file')) return;
+                        if (tbodyId === 'tableBody' && isFuelOrTollExemptRow(tr)) return;
                         const m = tr.querySelector('.val-month')?.value || '?';
                         const d = tr.querySelector('.val-day')?.value || '?';
                         noReceipt.push(`${prefix} ${idx + 1}번째 행 (${m}/${d})`);
@@ -1982,8 +1984,8 @@
                 const memo = tr.querySelector('.memo-input')?.innerText?.trim() || '';
                 if (!memo) violations.push({ s:'warning', m:`${idx+1}번째 행(${month}/${day}): 비고/상세 내용이 비어 있습니다.` });
 
-                // 수기 입력 행 영수증 첨부 필수
-                if (tr.getAttribute('data-source') === 'manual' && !tr.getAttribute('data-receipt-file')) {
+                // 수기 입력 행 영수증 첨부 필수 — 단, 유류비/통행료 자동 행은 면제
+                if (tr.getAttribute('data-source') === 'manual' && !tr.getAttribute('data-receipt-file') && !isFuelOrTollExemptRow(tr)) {
                     violations.push({ s:'error', m:`${idx+1}번째 행(${month}/${day}): 수기 입력 — 영수증 첨부 필요 (회색 📎+ 버튼)` });
                 }
 
@@ -2992,6 +2994,27 @@
         }
 
         function unformatComma(val) { if (!val) return 0; let cleaned = String(val).replace(/[^0-9.-]/g, ''); return parseFloat(cleaned) || 0; }
+
+        // 영수증 면제 행 판정 (국내 표 전용):
+        // - 비용이 col-2(유류비) 또는 col-3 + 메모에 "통행료" 포함 인 셀에만 있을 때 영수증 면제.
+        // - 그 외 col 에 비용이 있으면 면제 X (예: 일반 교통비/택시는 영수증 필수).
+        function isFuelOrTollExemptRow(tr) {
+            if (!tr || tr.closest('#tableBody') == null) return false;
+            const memo = (tr.querySelector('.memo-input')?.innerText || '').trim();
+            const memoIsToll = /통행료/.test(memo);
+            const inputs = tr.querySelectorAll('.cost-input');
+            let hasAny = false;
+            for (let i = 0; i < inputs.length; i++) {
+                const v = unformatComma(inputs[i].value);
+                if (v <= 0) continue;
+                hasAny = true;
+                const col = i + 1; // col-1..col-9
+                if (col === 2) continue;                 // 유류비 OK
+                if (col === 3 && memoIsToll) continue;   // 통행료 OK
+                return false;                            // 그 외 컬럼 비용 있음 → 면제 X
+            }
+            return hasAny;
+        }
 
         // 해외 금액 전용: 항상 소수점 2자리 (예: 25.5 → "25.50", 1234 → "1,234.00")
         function formatAmount2Decimals(input) {
