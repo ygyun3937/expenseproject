@@ -154,6 +154,8 @@
             /* 한도 초과 경고 배경색 인쇄 시 완전 제거 (id 포함해 특이도 높임) */
             #settlementTable .meal-limit-warning,
             #settlementTable input.meal-limit-warning { background: white !important; background-color: white !important; color: #111827 !important; font-weight: normal !important; }
+            /* 환율 미적용 강조 — 인쇄 시 무력화 (검증 모달이 화면에서 안내) */
+            .rate-missing { background: white !important; background-color: white !important; color: #111827 !important; font-weight: normal !important; outline: none !important; animation: none !important; }
 
             /* 유류비 섹션 레이아웃: 100% 스케일에서도 한 줄 정렬 */
             #fuelSection .flex.flex-col.md\:flex-row { flex-direction: row !important; align-items: center !important; gap: 12px !important; }
@@ -193,6 +195,10 @@
         .underlined-input { border-bottom: 1px solid #cbd5e1; outline: none; padding: 2px 4px; font-size: 0.875rem; background: transparent; transition: border-color 0.2s; text-align: center; }
         .underlined-input:focus { border-bottom: 2px solid #1e3a8a; }
         .meal-limit-warning { background-color: #fef2f2 !important; color: #dc2626 !important; font-weight: 700 !important; }
+
+        /* 환율 미적용 경고 — 외화 입력 + 통화 있는데 환율 0 */
+        .rate-missing { background-color: #fee2e2 !important; color: #b91c1c !important; outline: 2px solid #ef4444 !important; outline-offset: -2px; font-weight: 700 !important; animation: ratePulse 1.4s ease-in-out infinite; }
+        @keyframes ratePulse { 0%, 100% { background-color: #fee2e2 !important; } 50% { background-color: #fecaca !important; } }
 
         /* 출장일비 기간 내 식비 중복 경고 — 호박색 점선 */
         .trip-meal-conflict { background-color: #fef3c7 !important; color: #92400e !important; outline: 2px dashed #f59e0b !important; outline-offset: -2px; font-weight: 700 !important; }
@@ -3334,14 +3340,32 @@
         function calcOvsRow(inp) { const tr = inp.closest('tr'); let fcAmt = 0; for(let i=1; i<=9; i++) fcAmt += unformatComma(tr.querySelector(`.ovs-cat-${i}`).value); const rate = unformatComma(tr.querySelector('.ovs-rate').value); const krwAmt = Math.round(fcAmt * rate); tr.querySelector('.ovs-krw-amt').value = krwAmt > 0 ? krwAmt.toLocaleString() : ''; updateOverseasTotals(); }
         function updateOverseasTotals() {
             let catTotals = [0,0,0,0,0,0,0,0,0]; let grandKrw = 0;
-            document.querySelectorAll('#overseasTableBody tr').forEach(row => { for(let i=1; i<=9; i++) catTotals[i-1] += unformatComma(row.querySelector(`.ovs-cat-${i}`).value); grandKrw += unformatComma(row.querySelector('.ovs-krw-amt').value); });
+            document.querySelectorAll('#overseasTableBody tr').forEach(row => {
+                for(let i=1; i<=9; i++) catTotals[i-1] += unformatComma(row.querySelector(`.ovs-cat-${i}`).value);
+                grandKrw += unformatComma(row.querySelector('.ovs-krw-amt').value);
+                // 환율 미적용 검출 — 외화 입력값 있고 통화 지정됐는데 환율이 0
+                const costSum = (function(){let s=0; for(let i=1;i<=9;i++) s+=unformatComma(row.querySelector(`.ovs-cat-${i}`)?.value||'0'); return s;})();
+                const curr = (row.querySelector('.ovs-curr')?.value || '').trim().toUpperCase();
+                const rate = unformatComma(row.querySelector('.ovs-rate')?.value || '0');
+                const rateInput = row.querySelector('.ovs-rate');
+                const krwInput = row.querySelector('.ovs-krw-amt');
+                const isForeign = curr && curr !== 'KRW' && curr !== '원' && curr !== '원화';
+                const needsRate = costSum > 0 && isForeign && rate <= 0;
+                if (rateInput) {
+                    rateInput.classList.toggle('rate-missing', needsRate);
+                    if (needsRate) rateInput.title = '⚠ 환율 미적용 — 외화 입력값이 있는데 환율이 비어 원화환산이 되지 않습니다. [평균 환율 일괄 연동] 버튼 또는 직접 입력 필요.';
+                    else if ((rateInput.title || '').startsWith('⚠ 환율')) rateInput.title = '';
+                }
+                if (krwInput) krwInput.classList.toggle('rate-missing', needsRate);
+            });
             for(let i=1; i<=9; i++) { const el = document.getElementById(`ovs-total-0${i}`); if(el) el.innerText = catTotals[i-1] > 0 ? catTotals[i-1].toLocaleString() : '0'; }
-            document.getElementById('overseasFooterTotal').innerText = grandKrw.toLocaleString();
-            const tripKrw = unformatComma(document.getElementById('overseasTripFooterTotal')?.innerText || '0');
             const prepaid = unformatComma(document.getElementById('prepaidAmount')?.value || '0');
-            // 전도금은 일비 제외 — 해외경비 합계에서만 차감
-            const net = (grandKrw - prepaid) + tripKrw;
-            document.getElementById('overseasGrandTotal').innerText = net.toLocaleString();
+            const tripKrw = unformatComma(document.getElementById('overseasTripFooterTotal')?.innerText || '0');
+            // 해외경비 합계 footer = grandKrw − 전도금 (전도금이 있으면 차감 후 값 표시)
+            const netExpense = grandKrw - prepaid;
+            document.getElementById('overseasFooterTotal').innerText = netExpense.toLocaleString();
+            // 해외 합계 금액 = 해외경비 합계(차감 후) + 출장일비 합계 — 부제 식과 정확히 매칭
+            document.getElementById('overseasGrandTotal').innerText = (netExpense + tripKrw).toLocaleString();
             checkEntertainmentStatus();
             checkOverseasLimits();
         }
