@@ -1007,7 +1007,14 @@
                             <div class="flex items-center">
                                 <h2 class="font-bold text-lg text-indigo-800 flex items-center"><span class="mr-2">✈️</span> 해외 개인경비 정산<span id="overseasTripPeriodPrint" class="print-only-tab ml-3 text-sm font-bold text-indigo-700"></span></h2>
                             </div>
-                            <button onclick="addOverseasRow()" class="no-print text-sm bg-white hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded border border-indigo-200 font-bold shadow-sm transition">항목 추가</button>
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1.5 bg-blue-100 border border-blue-300 rounded-md px-2.5 py-1 shadow-sm" title="회사에서 미리 지급받은 출장 선지급금. 해외경비 합계(일비 제외)에서 차감되어 정산금액이 계산됩니다.">
+                                    <span class="text-[12px] font-bold text-slate-800 whitespace-nowrap"><span class="text-blue-700 mr-0.5">◈</span> 전도금<span class="text-[10px] font-medium text-slate-600 ml-0.5">(일비 제외)</span></span>
+                                    <span class="text-blue-500 font-bold text-[13px] leading-none">₩</span>
+                                    <input type="text" id="prepaidAmount" oninput="formatComma(this); updateOverseasTotals();" placeholder="0" class="w-32 text-right text-[13px] font-bold text-blue-900 outline-none bg-transparent placeholder:text-blue-300 border-b border-blue-400 focus:border-blue-600 px-1">
+                                </div>
+                                <button onclick="addOverseasRow()" class="no-print text-sm bg-white hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded border border-indigo-200 font-bold shadow-sm transition">항목 추가</button>
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full border-collapse table-auto" id="overseasTable">
@@ -1218,13 +1225,14 @@
                 fuelType: val('fuelType'), fuelPrice: val('fuelPrice'),
                 evEfficiency: val('evEfficiency'), evRate: val('evRate'), evBaseCharge: val('evBaseCharge'),
                 tripStartDate: val('tripStartDate'), tripEndDate: val('tripEndDate'),
+                prepaidAmount: val('prepaidAmount'),
                 fuelRows, tripRows,
             };
         }
         function restoreCommonState(c) {
             if (!c) return;
             const setVal = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined && v !== null) el.value = v; };
-            ['userName','userDept','writeDate','carModel','carNumber','fuelType','fuelPrice','evEfficiency','evRate','evBaseCharge','tripStartDate','tripEndDate'].forEach(k => setVal(k, c[k]));
+            ['userName','userDept','writeDate','carModel','carNumber','fuelType','fuelPrice','evEfficiency','evRate','evBaseCharge','tripStartDate','tripEndDate','prepaidAmount'].forEach(k => setVal(k, c[k]));
             if (typeof syncOverseasTripPeriodPrint === 'function') syncOverseasTripPeriodPrint();
             // 헤더 3탭 동기화
             if (c.writeDate) { setVal('writeDate_L', c.writeDate); setVal('writeDate_O', c.writeDate); }
@@ -3329,8 +3337,11 @@
             document.querySelectorAll('#overseasTableBody tr').forEach(row => { for(let i=1; i<=9; i++) catTotals[i-1] += unformatComma(row.querySelector(`.ovs-cat-${i}`).value); grandKrw += unformatComma(row.querySelector('.ovs-krw-amt').value); });
             for(let i=1; i<=9; i++) { const el = document.getElementById(`ovs-total-0${i}`); if(el) el.innerText = catTotals[i-1] > 0 ? catTotals[i-1].toLocaleString() : '0'; }
             document.getElementById('overseasFooterTotal').innerText = grandKrw.toLocaleString();
-            const tripKrw = unformatComma(document.getElementById('overseasTripFooterTotal')?.innerText || '0'); const finalStr = (grandKrw + tripKrw).toLocaleString();
-            document.getElementById('overseasGrandTotal').innerText = finalStr;
+            const tripKrw = unformatComma(document.getElementById('overseasTripFooterTotal')?.innerText || '0');
+            const prepaid = unformatComma(document.getElementById('prepaidAmount')?.value || '0');
+            // 전도금은 일비 제외 — 해외경비 합계에서만 차감
+            const net = (grandKrw - prepaid) + tripKrw;
+            document.getElementById('overseasGrandTotal').innerText = net.toLocaleString();
             checkEntertainmentStatus();
             checkOverseasLimits();
         }
