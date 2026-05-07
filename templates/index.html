@@ -643,9 +643,13 @@
                 <p class="text-gray-600 text-sm mt-1 font-medium">개인 경비 &amp; 유류비 정산 시스템</p>
             </div>
             <div class="mt-4 md:mt-0 space-x-2 flex">
-                <button onclick="smartPrint()" class="bg-mak-blue text-white px-5 py-2 rounded-lg hover:bg-blue-800 transition shadow-sm flex items-center text-sm font-bold text-center">
+                <button onclick="smartPrint('active')" id="printActiveBtn" class="bg-mak-blue text-white px-5 py-2 rounded-lg hover:bg-blue-800 transition shadow-sm flex items-center text-sm font-bold text-center" title="현재 선택된 탭의 정산서와 증빙 PDF만 인쇄">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                    정산서 인쇄
+                    <span id="printActiveLabel">국내 탭 인쇄</span>
+                </button>
+                <button onclick="smartPrint('all')" class="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition shadow-sm flex items-center text-sm font-bold text-center" title="국내 + 해외 정산서 및 증빙 PDF 모두 인쇄">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    전체 인쇄
                 </button>
             </div>
         </header>
@@ -1492,13 +1496,25 @@
             el.innerText = (start || end) ? `📅 출장기간: ${start || '-'} ~ ${end || '-'}` : '';
         }
 
-        async function smartPrint() {
+        async function smartPrint(mode = 'active') {
+            // mode: 'active' = 현재 탭만 / 'all' = 국내+해외 모두
             syncOverseasTripPeriodPrint();
             const domesticTotal = unformatComma(document.getElementById('grandTotal_P')?.innerText || '0');
             const overseasTotal = unformatComma(document.getElementById('overseasGrandTotal')?.innerText || '0');
-            if (domesticTotal === 0 && overseasTotal === 0) {
-                alert("정산할 금액이 없습니다. 항목을 입력한 뒤 다시 시도해 주세요.");
-                return;
+            // 인쇄 대상 탭 결정
+            const printDomestic = (mode === 'all') || (mode === 'active' && activeTab === 'domestic');
+            const printOverseas = (mode === 'all') || (mode === 'active' && activeTab === 'overseas');
+            if (mode === 'active') {
+                const tabTotal = activeTab === 'domestic' ? domesticTotal : overseasTotal;
+                if (tabTotal === 0) {
+                    alert(`현재 ${activeTab === 'domestic' ? '국내' : '해외'} 탭에 정산할 금액이 없습니다.\n[전체 인쇄] 버튼을 사용하거나 항목을 입력한 뒤 다시 시도해 주세요.`);
+                    return;
+                }
+            } else {
+                if (domesticTotal === 0 && overseasTotal === 0) {
+                    alert("정산할 금액이 없습니다. 항목을 입력한 뒤 다시 시도해 주세요.");
+                    return;
+                }
             }
             // 수기 입력 행 영수증 첨부 검증 — 영수증 미첨부 수기 행이 있으면 인쇄 차단
             {
@@ -1513,15 +1529,15 @@
                         noReceipt.push(`${prefix} ${idx + 1}번째 행 (${m}/${d})`);
                     });
                 };
-                checkManual('tableBody', '.cost-input', '국내');
-                checkManual('overseasTableBody', '.ovs-cost-input', '해외');
+                if (printDomestic) checkManual('tableBody', '.cost-input', '국내');
+                if (printOverseas) checkManual('overseasTableBody', '.ovs-cost-input', '해외');
                 if (noReceipt.length > 0) {
                     alert(`❌ 인쇄할 수 없습니다.\n\n수기 입력 항목 ${noReceipt.length}건에 영수증이 첨부되지 않았습니다:\n• ${noReceipt.slice(0, 5).join('\n• ')}${noReceipt.length > 5 ? `\n외 ${noReceipt.length - 5}건` : ''}\n\n각 행 우측의 회색 📎+ 버튼을 클릭해 영수증을 첨부한 뒤 다시 인쇄해 주세요.`);
                     return;
                 }
             }
             // 해외 인쇄 검증: 출장기간 설정 + [평균 환율 일괄 연동] 적용 + 모든 외화 행이 평균환율과 일치
-            {
+            if (printOverseas) {
                 const overseasRows = Array.from(document.querySelectorAll('#overseasTableBody tr'));
                 const hasOverseasCost = overseasRows.some(row =>
                     Array.from(row.querySelectorAll('.ovs-cost-input')).some(i => unformatComma(i.value) > 0)
@@ -1565,27 +1581,29 @@
             const domView = document.getElementById('domesticView');
             const ovsView = document.getElementById('overseasView');
             const portraitWrapper = document.getElementById('portraitWrapper');
-            if (domesticTotal === 0) domView?.classList.add('skip-print');
-            if (overseasTotal === 0) ovsView?.classList.add('skip-print');
+            // 인쇄 대상이 아니거나 합계가 0이면 해당 탭 섹션 인쇄 제외
+            if (!printDomestic || domesticTotal === 0) domView?.classList.add('skip-print');
+            if (!printOverseas || overseasTotal === 0) ovsView?.classList.add('skip-print');
             // 유류비 내역이 전부 비어있으면 포트레이트 래퍼(유류비 섹션 + 중복 헤더) 전체 제외
+            //   ※ 유류비는 국내 정산의 일부이므로 해외만 인쇄할 때도 제외
             const hasFuelData = Array.from(document.querySelectorAll('#fuelLogBody tr')).some(tr => !tr.classList.contains('empty-row'));
-            if (!hasFuelData) portraitWrapper?.classList.add('skip-print');
-            // 국내 출장일비 금액 합계 0이면 출장일비 섹션 제외
+            if (!hasFuelData || !printDomestic) portraitWrapper?.classList.add('skip-print');
+            // 국내 출장일비 — 인쇄 대상이 아니거나 합계가 0이면 제외
             const tripTotal = unformatComma(document.getElementById('totalTripAllowance')?.innerText || '0');
-            if (tripTotal === 0) document.getElementById('tripSection')?.classList.add('skip-print');
-            // 해외 출장일비 금액 합계 0이면 해외 출장일비 섹션 제외
+            if (!printDomestic || tripTotal === 0) document.getElementById('tripSection')?.classList.add('skip-print');
+            // 해외 출장일비 — 인쇄 대상이 아니거나 합계가 0이면 제외
             const ovsTripTotal = unformatComma(document.getElementById('overseasTripFooterTotal')?.innerText || '0');
-            if (ovsTripTotal === 0) document.getElementById('overseasTripSection')?.classList.add('skip-print');
+            if (!printOverseas || ovsTripTotal === 0) document.getElementById('overseasTripSection')?.classList.add('skip-print');
 
             // 증빙 PDF 페이지 첨부 — 각 탭 정산서 다음에 해당 탭 영수증 인쇄
             // 인쇄 순서: 국내 정산서 → 국내 영수증 → 해외 정산서 → 해외 영수증
             const appendedReceiptContainers = [];
             try {
-                if (domesticTotal !== 0) {
+                if (printDomestic && domesticTotal !== 0) {
                     const c = await buildReceiptPrintSection('domestic');
                     if (c && domView) { domView.appendChild(c); appendedReceiptContainers.push(c); }
                 }
-                if (overseasTotal !== 0) {
+                if (printOverseas && overseasTotal !== 0) {
                     const c = await buildReceiptPrintSection('overseas');
                     if (c && ovsView) { ovsView.appendChild(c); appendedReceiptContainers.push(c); }
                 }
@@ -2862,6 +2880,11 @@
                 ovsBtn.className = "px-8 py-3.5 font-bold text-sm bg-white border-t-4 border-l border-r border-indigo-600 text-indigo-800 rounded-t-lg shadow-sm z-10 -mb-[1px] flex items-center transition-all";
                 domBtn.className = "px-8 py-3.5 font-bold text-sm bg-gray-100 border-t-4 border-transparent border-l border-r border-gray-200 text-gray-500 hover:bg-gray-50 rounded-t-lg transition-all flex items-center";
                 document.getElementById('aiHintText').innerHTML = "현재 [해외] 탭 선택됨";
+            }
+            // "현재 탭 인쇄" 버튼 라벨 동기화
+            const printActiveLabel = document.getElementById('printActiveLabel');
+            if (printActiveLabel) {
+                printActiveLabel.textContent = tab === 'domestic' ? '국내 탭 인쇄' : '해외 탭 인쇄';
             }
         }
 
